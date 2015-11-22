@@ -11463,6 +11463,8 @@ Reference: Dixon, Erin Elizabeth, "Energy Model Development and Heating Energy I
 Group     Fans
 ------------
 
+As of version 8.5, a new simple "Fan" input object was added that can be substitued for Fan:ConstantVolume, Fan:OnOff, Fan:VariableVolume, and FanPerformance:NightVentilation.  Users are encouraged to migrate their models to use this new Fan in the air loop or zone equipment because the original fan objects will be deprecated and removed in the future. 
+
 The following fans may be defined either in the air loop or as a zone equipment component: Fan:ConstantVolume, Fan:OnOff, Fan:VariableVolume, Fan:ZoneExhaust, and FanPerformance:NightVentilation. The data that are common to these fan types include an identifying name, an availability schedule name, a total efficiency rating, a rated pressure rise, and inlet and outlet air node names. In the case of a variable volume fan, additional input includes parameters for modeling fan performance over a range of fan speeds. See the engineering documentation for the variable speed fan for a further description of what these coefficients represent. Commonly-used values for different variable volume systems are shown in the following table.
 
 Table 29. Fan Coefficient Values
@@ -11501,6 +11503,116 @@ Table 29. Fan Coefficient Values
 <td>0.000</td>
 </tr>
 </table>
+
+### Fan,
+This object models fans of various types using a relatively simple engineering model. This fan can be used in variable air volume, constant volume, on-off cycling, two-speed, or multi-speed applications.  It was designed as a replacement for Fan:ConstantVolume, Fan:OnOff, Fan:VariableVolume, and FanPerformance:NightVentilation. The electric power consumed by the fan can be directly input or autosized using one of three optional methods.  For fans that can vary the volume flow rate the performance can be described using a seperate performance curve or table object. Or for fans with discrete speed control the power fraction at each speed can be input directly with no need for a performance curve.  
+
+#### Field: Name
+A unique name for this fan.  Any reference to this fan by another object will use this name.
+
+#### Field: Availability Schedule Name
+The name of an availability schedule for this fan. Schedule values greater than zero means the fan is available. If this field is blank, the fan is always available.
+
+#### Field: Air Inlet Node Name
+The name of an air system node at the inlet to the fan. This field is required. 
+
+#### Field: Air Outlet Node Name
+The name of an air system node at the outlet of the fan.  This field is required.
+
+#### Field: Design Maximum Air Flow Rate
+This numeric field is the design volume flow rate of fan as installed in the HVAC system, in m<sup>3</sup>/s. This volume flow rate will be converted to a mass flow rate using an altitude-adjusted standard density of dry air at 20 &deg;C drybulb. This the full-speed flow rate and serves as the upper limit for fans that can vary their flow rate. This field can be autosized. 
+
+#### Field: Speed Control Method
+This field is used to select how the fan fan speed can be varied. There are two choices, Variable or Discrete.  Discrete indicates that the fan can operate only at specific speed setting and cannot be continuously varied.  Variable indicates that the fan speed can vary smootly from the Minimum Flow Rate Fraction up to the Design Maximum Air Flow Rate.  This input informs the program how power should be calculated with Discrete control using time-weighted averaging and Variable using flow-weighted averaging. A constant volume or on-off fan should use Discrete with Number of Speed set to 1.  A variable air volume fan should use Variable. 
+
+#### Field: Electric Power Minimum Flow Rate Fraction
+This numeric field is used to describe how low a variable speed fan can be operated. This value is used to calculate the fan power at low flow rates but does not enforce a lower end of the air flow during simulation. The value is a fraction of Design Maximum Air Flow Rate and should be between 0 and 1.  This field is only used when Speed Control Method is set to Variable.  
+
+#### Field: Design Pressure Rise
+This numeric field is the total system pressure rise experienced by the fan in Pascals at full flow rate and altitude-adjusted standard density of dry air at 20 &deg;C drybulb. This field is required. 
+
+#### Field: Motor Efficiency
+This numeric field describes the electric motor that drives the fan.  Efficiency is the shaft power divided by the electric power consumed by the motor.  The value must be between 0 and 1. The default is 0.9.
+
+#### Field: Motor In Air Stream Fraction
+This numeric field is the fraction of the motor heat that is added to the airstream.  The value must be between 0 and 1.  A value of 0 means fan motor is located outside of air stream and none of the motor's heat is added to the air stream.  A value of 1.0 means the motor is located inside of air stream and all of the motor's heat is added to the air stream.  Note that regardless of the value here there will be heat added to the air stream as a result of the work done to move the air, this field is only describing what happens to the heat generated as a result of the motor's inefficiencies. The heat lost from the motor that is not added to the air stream can be added to a thermal zone where the motor is located by entering a zone name in the input field called Motor Loss Zone Name below. 
+
+#### Field: Design Electric Power Consumption
+       \type real
+       \units W
+       \autosizable
+       \note Fan power consumption at maximum air flow rate.  
+       \note If autosized the method used to scale power is chosen in the following field
+#### Field: Design Power Sizing Method
+       \type choice
+       \key PowerPerFlow
+       \key PowerPerFlowPerPressure
+       \key TotalEfficiency
+       \default PowerPerFlowPerPressure
+#### Field: Electric Power Per Unit Flow Rate
+       \type real
+       \units W/(m3/s)
+       \ip-units W/(ft3/min)
+       \default ???
+#### Field: Electric Power Per Unit Flow Rate Per Unit Pressure
+       \type real
+       \units W/((m3/s) -Pa)
+       \ip-units W/((ft3/min)-inH2O)
+       \default 1.66667
+#### Field: Fan Total Efficiency
+       \type real
+       \default 0.7
+       \minimum>0.0
+       \maximum 1.0
+#### Field: Electric Power Function of Flow Fraction Curve Name
+       \note independent variable is normalized flow rate, current flow divided by Design Maximum Flow Rate.
+       \note dependent variable is modification factor multiplied by Design Power Consumption.
+       \note field is required if Speed Control Method is set to Variable
+       \type object-list
+       \object-list UniVariateCurves
+       \object-list UniVariateTables
+#### Field: Night Ventilation Mode Pressure Rise
+       \note pressure rise to use when in night mode using AvailabilityManager:NightVentilation
+       \type real
+       \units Pa
+       \ip-units inH2O
+#### Field: Night Ventilation Mode Flow Fraction
+       \note Fraction of Design Maximum Air Flow Rate to use when in night mode using AvailabilityManager:NightVentilation
+       \type real
+       \minimum 0.0
+       \maximum 1.0
+#### Field: Motor Loss Zone Name
+        \note optional, if used fan motor heat losses that not added to air stream are transfered to zone as internal gains
+        \type object-list
+        \object-list ZoneNames
+#### Field:Motor Loss Radiative Fraction 
+        \note optional. If zone identified in previous field then this determines
+        \note the split between convection and radiation for the fan motor's skin losses
+        \type real
+        \minimum 0.0
+        \maximum 1.0
+
+#### Field: End-Use Subcategory
+       \type alpha
+       \retaincase
+       \default General
+#### Field: Number of Speeds
+       \note number of different speed levels available when Speed Control Method is set to Discrete
+       \note Speed need to be arranged in increasing order in remaining field sets.
+       \note If set to 1, or omitted, and Speed Control Method is Discrete then constant fan speed is the design maximum.
+       \type integer
+       \default 1
+#### Field: \field Speed n Flow Fraction
+       \begin-extensible
+       \type real
+       \minimum 0.0
+       \maximum 1.0
+#### Field: \field Speed n Electric Power Fraction
+       \note if left blank then use Electric Power Function of Flow Fraction Curve
+       \type real
+       \minimum 0.0
+       \maximum 1.0
+
 
 ### Fan:ConstantVolume
 

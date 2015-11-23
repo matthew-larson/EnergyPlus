@@ -1,15 +1,15 @@
-A New Versatile Fan Input Object
+A New Versatile Fan
 ================
 
 **B. Griffith, Energy Archmage Company, for SEI/TRANE**
 
  - first draft 11/10/2015
- - second draft 11/21/2015
+ - second draft 11/23/2015
  
 
 ## Justification for New Feature ##
 
-The existing set of fan objects is confusing to users and a burden to interface developers.  Fan:ConstantVolume and Fan:OnOff appear to be for the same sort of applications and it has been suggested that they be combined into one.  Fan:OnOff has curve options for performance at varying flow which seems to be the domain of Fan:VariableVolume. Fan:VariableVolume has fixed input fields for curve coefficients rather than referencing an external performance curve which is current practice for other HVAC component models. There is no clarity on which fan is for two-speed applications. 
+The existing set of fan objects is confusing to users and a burden to interface developers.  Fan:ConstantVolume and Fan:OnOff appear to be for the same sort of applications and it has been suggested that they be combined into one.  Fan:OnOff has curve options for performance at varying flow which seems to be the domain of Fan:VariableVolume. Fan:VariableVolume has fixed input fields for curve coefficients rather than referencing an external performance curve which is current practice for other HVAC component models. There is no clarity on which fan is for two-speed applications.
 
 ASHRAE Standard 90.1 has new requirements that will lead to two-speed fans in many (all?) applications which makes in more important than ever that EnergyPlus has a clear and accurate way of modeling two-speed (and multi-speed) fans. Fan:OnOff was expanded circa 2009 to add curves for performance at different flow rates to improve modeling multi-speed fans in unitary systems (see NFP_OnOffFan_MultispeedPowerAdjustments.doc). However, PNNL researchers  point out that the flow-weighted average approach introduces up to 20% error in power consumption compared to a time-weighted approach (see Hart, Athalye, and Wang. 2013. Improving Simulation of Outside Air Economizers and Fan Control for Unitary Air Conditioners). The problem with the current approach is that it assumes that the fan is really running at the average flow rate when calculating power. When the average flow rate does not match one of the actual speed levels that the fan can operate at, the fan is actually cycling between speed levels with some fraction of the time spent at each speed level.  Because fan power is highly non-linear with flow, it is important to average the power results using a time-weighted approach rather than simply use the average flow in the power calculation.  It is therefore justified that fan models be improved to include input data for the discrete speed levels that the fans can actually operate at so that the current problem can be corrected. The following figure diagrams the issue.
 
@@ -31,28 +31,28 @@ A second draft of the design document was produced that incorporates comments.
 
 ## Overview ##
 
-This proposal is for adding an entirely new fan input object that can serve as a direct substitute for Fan:VariableVolume, Fan:ConstantVolume, or Fan:OnOff. In addition it will incorporate input fields needed for night ventilation operation mode so that a separate FanPerformance:NightVentilation is not required when using the night ventilation availability manager. The core fan model will not be significantly changed, but rather the simple (not component model) model variants will be all be available with a single input object.  The exception is that for fans with discrete speed levels, the power calculation will be done using a time-weighted method instead of a flow-weighted method. Motor losses not added to the air stream can be rejected to the mechanical room. The older fan objects will be retained for some number of release cycles with the plant that they will eventually be deprecated and transitioned to use the new fan object. 
+This proposal is for adding an entirely new fan input object that can serve as a direct substitute for Fan:VariableVolume, Fan:ConstantVolume, or Fan:OnOff. In addition it will incorporate input fields needed for night ventilation operation mode so that a separate FanPerformance:NightVentilation is not required when using the night ventilation availability manager. The core fan model will not be significantly changed, but rather the simple (not component model) model variants will be all be available within a single input object.  The exception is that for fans with discrete speed levels, the power calculation will be done using a time-weighted method instead of a flow-weighted method. Also, motor losses not added to the air stream can be rejected to the mechanical room. The older fan objects will be retained for some number of release cycles with the plan that they will eventually be deprecated and transitioned to use the new fan object. 
 
 ## Approach ##
 
-A new input object with proposed class name *Fan* will be added that has a design electric power consumption, separate performance modifier curves, scalable sizing factors, the ability to be used as a single-speed, two-speed, multi-speed, or VAV.  New input for discrete speed levels will be included and fan power calculations improved for time-weighted averaging. The underlying engineering model will be largely retained.  Sizing calculations will determine and report a Design Electric Power Consumption. Energy balance will be improved by allowing the option of entering a name of the zone where the motor is located that will receive motor heat losses that are not added to the air stream as internal gains. Parent objects that are not destined to be deprecated and contain a fan will all be modified to accept the new fan.  The new fan will be designed to allow for eventual transition of older objects. 
+A new input object with proposed class name *Fan* will be added that has a design electric power consumption, separate performance modifier curves, scalable sizing factors, the ability to be used as a single-speed, two-speed, multi-speed, or VAV.  New input for discrete speed levels will be included and fan power calculations improved for time-weighted averaging. The underlying engineering model will be largely retained.  Sizing calculations will determine and report a Design Electric Power Consumption. Energy balance will be improved by allowing the option of entering a name of the zone where the motor is located that will receive motor heat losses that are not added to the air stream as internal gains. Parent objects that are not destined to be deprecated and contain a fan will all be modified to accept the new fan.  The new fan will be designed to allow for eventual transition of older fan objects into the new object. 
 
 ## Implementation ##
-Fan models are currently implemented in Fans.hh and Fans.cc.  The different fan models all share the same data structure and many of the same routines.  The new fan will be implemented in new source file, called  FanObject.hh/FanObject.cc, to allow for new style programming and a clean separation to help with eventual removal of the older fan objects.  When motor efficiency and motor in air stream fractions are both less than 1.0, the motor losses and a motor zone name is input, then the losses will be registered as internal gains as is done for pumps. 
+Fan models are currently implemented in Fans.hh and Fans.cc.  The different fan models all share the same data structure and many of the same routines.  The new fan will be implemented in a new source file, called  FanObject.hh/FanObject.cc, to allow for new style programming and a clean separation from the older fan objects to help with eventual removal of them from the code.  When motor efficiency and motor in air stream fractions are both less than 1.0 and a motor zone name is input, then the losses will be added to the zone as internal gains as is now done for pumps. 
   
 ### OO Design###
 The new fan will be implemented as a class using Object Oriented programming. The existing fan code in Fans.hh/Fans.cc will be used as guide to the engineering formulation but reimplemented using OO techniques.  The style will largely follow the pattern in HVACFourPipeBeam.cc. The fan object instances will be held in standard library smart pointers.  
 
 ### Data Structures ###
-The data structure called FanEquipConditions will serve as a starting point for data in the new fan class. New variables will be added for input for scalable units sizing factors, sizing method switches, design electric power, and discrete speed levels.  
+The data structure called FanEquipConditions will serve as a starting point for data in the new fan class. New variables will be added for input for scalable units sizing factors, sizing method switches, design electric power, discrete speed levels, and zone gains.  
 
 ## Testing/Validation/Data Sources ##
 
-The new fan will be compared to the older fans with equivalent input and results compared. 
+The new fan will be compared to the older fans with equivalent inputs and results compared. 
 
 ## Input Output Reference Documentation ##
 
-See changes made in actual I/O reference .md files.  The fans are described in the file "01d-InputOutputReference.md."  However the I/o reference will be updated throughout wherever fan objects are referenced and the new fan can be used. 
+The fans are described in the file "01d-InputOutputReference.md"  However the I/o reference will be updated throughout wherever fan objects are referenced and the new fan can be used. The Fan I/O description follows:
 
 ### Fan
 This object models fans of various types using a relatively simple engineering model. This fan can be used in variable air volume, constant volume, on-off cycling, two-speed, or multi-speed applications.  It was designed as a replacement for Fan:ConstantVolume, Fan:OnOff, Fan:VariableVolume, and FanPerformance:NightVentilation. The electric power consumed by the fan can be directly input or autosized using one of three optional methods.  For fans that can vary the volume flow rate the performance can be described using a separate performance curve or table object. Or for fans with discrete speed control the power fraction at each speed can be input directly with no need for a performance curve.  
@@ -302,7 +302,7 @@ The IDD object for the proposed new fan input follows
 
 ## Engineering Reference ##
 
-See changes made in actual Eng Ref .md file called " "
+<See changes made in actual Eng Ref .md file called " ">
 
 ## Example File and Transition Changes ##
 
@@ -310,5 +310,5 @@ No transition is planned for this project however feasibility of transition rule
 
 ## References ##
 
-hart, R., Athalye, R., Wang, W.; 2013. Improving Simulation of Outside Air Economizer and Fan Control for Unitary Air Conditioners. ASHRAE Transactions. Vol 119 Issue 2, p1-8. 
+Hart, R., Athalye, R., Wang, W.; 2013. Improving Simulation of Outside Air Economizer and Fan Control for Unitary Air Conditioners. ASHRAE Transactions. Vol 119 Issue 2, p1-8. 
 

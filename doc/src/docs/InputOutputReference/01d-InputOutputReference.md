@@ -11504,8 +11504,8 @@ Table 29. Fan Coefficient Values
 </tr>
 </table>
 
-### Fan,
-This object models fans of various types using a relatively simple engineering model. This fan can be used in variable air volume, constant volume, on-off cycling, two-speed, or multi-speed applications.  It was designed as a replacement for Fan:ConstantVolume, Fan:OnOff, Fan:VariableVolume, and FanPerformance:NightVentilation. The electric power consumed by the fan can be directly input or autosized using one of three optional methods.  For fans that can vary the volume flow rate the performance can be described using a seperate performance curve or table object. Or for fans with discrete speed control the power fraction at each speed can be input directly with no need for a performance curve.  
+### Fan
+This object models fans of various types using a relatively simple engineering model. This fan can be used in variable air volume, constant volume, on-off cycling, two-speed, or multi-speed applications.  It was designed as a replacement for Fan:ConstantVolume, Fan:OnOff, Fan:VariableVolume, and FanPerformance:NightVentilation. The electric power consumed by the fan can be directly input or autosized using one of three optional methods.  For fans that can vary the volume flow rate the performance can be described using a separate performance curve or table object. Or for fans with discrete speed control the power fraction at each speed can be input directly with no need for a performance curve.  
 
 #### Field: Name
 A unique name for this fan.  Any reference to this fan by another object will use this name.
@@ -11523,10 +11523,10 @@ The name of an air system node at the outlet of the fan.  This field is required
 This numeric field is the design volume flow rate of fan as installed in the HVAC system, in m<sup>3</sup>/s. This volume flow rate will be converted to a mass flow rate using an altitude-adjusted standard density of dry air at 20 &deg;C drybulb. This the full-speed flow rate and serves as the upper limit for fans that can vary their flow rate. This field can be autosized. 
 
 #### Field: Speed Control Method
-This field is used to select how the fan fan speed can be varied. There are two choices, Variable or Discrete.  Discrete indicates that the fan can operate only at specific speed setting and cannot be continuously varied.  Variable indicates that the fan speed can vary smootly from the Minimum Flow Rate Fraction up to the Design Maximum Air Flow Rate.  This input informs the program how power should be calculated with Discrete control using time-weighted averaging and Variable using flow-weighted averaging. A constant volume or on-off fan should use Discrete with Number of Speed set to 1.  A variable air volume fan should use Variable. 
+This field is used to select how the fan fan speed can be varied. There are two choices, Continuous or Discrete.  Discrete indicates that the fan can operate only at specific speed settings and cannot be continuously varied.  Continuous indicates that the fan speed is variable and can change smoothly up to the Design Maximum Air Flow Rate.  This input informs the program how power should be calculated with Discrete control using time-weighted averaging and Variable using flow-weighted averaging. A constant volume or on-off fan should use Discrete with Number of Speeds set to 1.  A variable air volume fan should use Continuous. 
 
 #### Field: Electric Power Minimum Flow Rate Fraction
-This numeric field is used to describe how low a variable speed fan can be operated. This value is used to calculate the fan power at low flow rates but does not enforce a lower end of the air flow during simulation. The value is a fraction of Design Maximum Air Flow Rate and should be between 0 and 1.  This field is only used when Speed Control Method is set to Variable.  
+This numeric field is used to describe how low a variable speed fan can be operated. This value is used to calculate the fan power at low flow rates but does not enforce a lower end of the air flow during simulation. The value is a fraction of Design Maximum Air Flow Rate and should be between 0 and 1.  This field is only used when Speed Control Method is set to Continuous.  
 
 #### Field: Design Pressure Rise
 This numeric field is the total system pressure rise experienced by the fan in Pascals at full flow rate and altitude-adjusted standard density of dry air at 20 &deg;C drybulb. This field is required. 
@@ -11535,83 +11535,57 @@ This numeric field is the total system pressure rise experienced by the fan in P
 This numeric field describes the electric motor that drives the fan.  Efficiency is the shaft power divided by the electric power consumed by the motor.  The value must be between 0 and 1. The default is 0.9.
 
 #### Field: Motor In Air Stream Fraction
-This numeric field is the fraction of the motor heat that is added to the airstream.  The value must be between 0 and 1.  A value of 0 means fan motor is located outside of air stream and none of the motor's heat is added to the air stream.  A value of 1.0 means the motor is located inside of air stream and all of the motor's heat is added to the air stream.  Note that regardless of the value here there will be heat added to the air stream as a result of the work done to move the air, this field is only describing what happens to the heat generated as a result of the motor's inefficiencies. The heat lost from the motor that is not added to the air stream can be added to a thermal zone where the motor is located by entering a zone name in the input field called Motor Loss Zone Name below. 
+This numeric field is the fraction of the motor heat that is added to the air stream.  The value must be between 0 and 1.  A value of 0 means fan motor is located completely outside of air stream and none of the motor's heat is added to the air stream.  A value of 1.0 means the motor is located completely inside of air stream and all of the motor's heat is added to the air stream.  Note that regardless of the value here there will be heat added to the air stream as a result of the work done to move the air, this field is only describing what happens to the heat generated as a result of the motor's inefficiency. The heat lost from the motor that is not added to the air stream can be added to the surrounding thermal zone where the motor is located by entering a zone name in the input field called Motor Loss Zone Name below. 
 
 #### Field: Design Electric Power Consumption
-       \type real
-       \units W
-       \autosizable
-       \note Fan power consumption at maximum air flow rate.  
-       \note If autosized the method used to scale power is chosen in the following field
+This numeric field is the electric power consumption at the full Design Maximum Air Flow Rate and Design Pressure Rise, in Watts.  The value entered in this field is used to determine the fan efficiency. This field is autosizable.  When autosized there are three different options available for the method used to size the design power and can be selected in the following field.        
+
 #### Field: Design Power Sizing Method
-       \type choice
-       \key PowerPerFlow
-       \key PowerPerFlowPerPressure
-       \key TotalEfficiency
-       \default PowerPerFlowPerPressure
+This field is used to select how the fan's Design Electric Power Consumption is sized when the previous field is set to autosize.  There are three choices: PowerPerFlow, PowerPerFlowPerPressure, or TotalEfficiency.  The default is PowerPerFlowPerPressure. 
+When PowerPerFlow is selected, the value entered in the input field called Electric Power Per Unit Flow Rate is used to size the Design Electric Power Consumption.  This method is useful during early-phase design modeling when little information is available for determining the Design Pressure Rise.  Although the pressure rise is not used to size the Design Electric Power Consumption it is still used to determine the heat added to the air stream as a result of the work done by the fan.  
+When PowerPerFlowPerPressure is selected, the value entered in the input field called Electric Power Per Unit Flow Rate Per Unit Pressure is used to size the power.  This method takes into account the Design Pressure Rise when sizing the Design Electric Power Consumption. 
+When TotalEfficiency is selected, the value entered in the input field called Fan Total Efficiency is used to size the power.  This is the legacy method used by the older fan objects prior to verson 8.5. 
+
 #### Field: Electric Power Per Unit Flow Rate
-       \type real
-       \units W/(m3/s)
-       \ip-units W/(ft3/min)
-       \default ???
+This numeric field is used when the Design Power Sizing Method is set to PowerPerFlow and the Design Electric Power Consumption is set to Autosize.  This value, in W/(m<sup>3</sup>/s), is used to scale the Design Electric Power Consumption directly from the Design Maximum Air Flow Rate.  This scaling factor is defined such that Design Electric Power Consumption = (Electric Power Per Unit Flow Rate) * (Design Maximum Air Flow Rate).
+
 #### Field: Electric Power Per Unit Flow Rate Per Unit Pressure
-       \type real
-       \units W/((m3/s) -Pa)
-       \ip-units W/((ft3/min)-inH2O)
-       \default 1.66667
+This numeric field is used when the Design Power Sizing Method is set to PowerPerFlowPerPressure and the Design Electric Power Consumption is set to Autosize.  This value, in W/((m<sup>3</sup>/s)-Pa), is used to scale the Design Electric Power Consumption from the Design Maximum Air Flow Rate and the Design Pressure Rise.  This scaling factor is defined such that Design Electric Power Consumption = (Electric Power Per Unit Flow Rate Per Unit Pressure) * (Design Maximum Air Flow Rate) * (Design Pressure Rise).  The default is 1.66667. 
+
 #### Field: Fan Total Efficiency
-       \type real
-       \default 0.7
-       \minimum>0.0
-       \maximum 1.0
+This numeric field is used when the Design Power Sizing Method is set to TotalEfficiency and the Design Electric Power Consumption is set to Autosize.  This value is used to determine the Design Electric Power Consumption from the Design Maximum Air Flow Rate and the Design Pressure Rise.  The total efficiency is defined such that the Design Electric Power Consumption = (Design Maximum Air Flow Rate) * (Design Pressure Rise) / (Fan Total Efficiency).  The default is 0.7.
+
 #### Field: Electric Power Function of Flow Fraction Curve Name
-       \note independent variable is normalized flow rate, current flow divided by Design Maximum Flow Rate.
-       \note dependent variable is modification factor multiplied by Design Power Consumption.
-       \note field is required if Speed Control Method is set to Variable
-       \type object-list
-       \object-list UniVariateCurves
-       \object-list UniVariateTables
+This field is the name of performance curve or table that describes how electric power consumption varies with air flow rate.  The independent "x" variable of the performance curve or look up table is a normalized flow fraction defined as the current flow rate divided by the Design Maximum Air Flow Rate.  The model actually uses the ratio of (moist) air mass flow rates with the numerator taking account of humidity and barometric pressure.  The dependent variable that is the result of the performance curve or lookup table is a fraction that is multiplied by the Design Electric Power Consumption to determine the electric power use as a function of flow rate.  Any of the single-independent-variable curves can be used.  This field is required if the Speed Control Method is set to Continuous.  This field is used when the Speed Control Method is set to Discrete and the Number of Speeds is greater than 1 and the input fields Speed "n" Electric Power Fraction are left blank.  Note that the fourth order polynomial in Curve:Quartic can be used with the coefficients listed above to replicate the formulation used in the older Fan:VariableVolume input object prior to version 8.5 
+
 #### Field: Night Ventilation Mode Pressure Rise
-       \note pressure rise to use when in night mode using AvailabilityManager:NightVentilation
-       \type real
-       \units Pa
-       \ip-units inH2O
+This optional numeric field is the total system pressure rise experienced by the fan when operating in night mode using AvailabilityManager:NightVentilation, in Pascals.  This field allows modeling the fan device with a different system pressure that might occur when implementing a special strategy to precool a building at night using outdoor air with dampers fully open.  This field is only used when an AvailabilityManager:NightVentilation object is used that specifies the fan's availability schedule.  This field and the next one replace the FanPerformance:NightVentilation object which is not needed with this fan.  
+
 #### Field: Night Ventilation Mode Flow Fraction
-       \note Fraction of Design Maximum Air Flow Rate to use when in night mode using AvailabilityManager:NightVentilation
-       \type real
-       \minimum 0.0
-       \maximum 1.0
+This optional numeric field is the air flow fraction for the fan speed used when operating in night mode using AvailabilityManager:NighVentilation.  This is fraction between 0 and 1 and describes the speed level for the fan relative to the Design Maximum Air Flow Rate. This field is only used when an AvailabilityManager:NightVentilation object is used that specifies the fan's availability schedule.  This field and the previous one replace the FanPerformance:NightVentilation object which is not needed with this fan.  
+
 #### Field: Motor Loss Zone Name
-        \note optional, if used fan motor heat losses that not added to air stream are transfered to zone as internal gains
-        \type object-list
-        \object-list ZoneNames
+This optional field can be used to input the name of the Zone in which the fan motor is located.  If the fan is outdoors, or the motor's thermal losses are not to be modeled then leave this field blank.  If a valid Zone name is entered then the portion of the motor's thermal losses that are not added to the air stream are added to the surrounding thermal zone as internal heat gains.
+
 #### Field:Motor Loss Radiative Fraction 
-        \note optional. If zone identified in previous field then this determines
-        \note the split between convection and radiation for the fan motor's skin losses
-        \type real
-        \minimum 0.0
-        \maximum 1.0
+This optional numeric field is used when a Zone name is entered in the previous field to determine the split between thermal radiation and thermal convection for the heat losses from the fan motor. If this field is left blank then all the losses will be convective.  Values should be between 0 and 1.
 
 #### Field: End-Use Subcategory
-       \type alpha
-       \retaincase
-       \default General
+This optional field allows entering a user-defined name for the end use subcategory that will be used to meter this fan's electric energy consumption. If this field is omitted or left blank the fan will be assigned to the "General" end use subcategory.  End use subcategories are helpful to organize reports in the tabular summary table and appear on special meter outputs. 
+
 #### Field: Number of Speeds
-       \note number of different speed levels available when Speed Control Method is set to Discrete
-       \note Speed need to be arranged in increasing order in remaining field sets.
-       \note If set to 1, or omitted, and Speed Control Method is Discrete then constant fan speed is the design maximum.
-       \type integer
-       \default 1
-#### Field: \field Speed n Flow Fraction
-       \begin-extensible
-       \type real
-       \minimum 0.0
-       \maximum 1.0
-#### Field: \field Speed n Electric Power Fraction
-       \note if left blank then use Electric Power Function of Flow Fraction Curve
-       \type real
-       \minimum 0.0
-       \maximum 1.0
+This numeric field is used to specify the number of different speed levels available when Speed Control Method is set to Discrete.  This field and the remaining field sets are not used when the Speed Control Method is set to Continuous.  For a constant volume fan enter a value of 1.0.  A value of 1.0 will use the fan's maximum design and no additional field sets are needed.  When set to a value greater than 1 then a pair of flow and power fraction inputs are provided for each speed in the remaining input fields. 
+
+#### Field Set: (Speed Flow Fraction, Speed Electric Power Fraction)
+This input object is extensible with a set of two fields for each speed that the fan can take.  A field set is pair of values for the flow fraction and electric power fraction at each speed. The sets should be arranged in increasing order so that the flow fractions become larger in subsequent field sets.  Typically the highest speed level will match the design maximum and have fractions of 1.0.  
+
+#### Field: Speed <#> Flow Fraction
+This is the flow fraction for the fan speed.  This value is multiplied by the Design Maximum Air Flow Rate to obtain the flow rate when operating at this speed. 
+
+#### Field: Speed <#> Electric Power Fraction
+This field is the electric power fraction for the fan speed.  This value is multiplied by the Design Electric Power Consumption to obtain the power consumption when operating at this speed.  This field is optional if a performance curve is used in the input field Electric Power Function of Flow Fraction Curve Name.  If omitted and the performance curve is entered, the power at this speed will be determined using the curve or table.  If the power fraction is entered in this field it will be used instead of the curve or table.  This allows either overriding the curve for particular speeds or removes the necessity of creating a curve for discrete speed control.  
+
+
 
 
 ### Fan:ConstantVolume

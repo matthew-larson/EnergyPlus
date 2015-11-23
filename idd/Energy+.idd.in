@@ -40605,7 +40605,7 @@ Fan,
        \autosizable
   A5 , \field Speed Control Method
        \type choice
-       \key Variable
+       \key Continuous
        \key Discrete
        \default Discrete
   N2 , \field Electric Power Minimum Flow Rate Fraction
@@ -40657,14 +40657,14 @@ Fan,
        \minimum>0.0
        \maximum 1.0
   A7 , \field Electric Power Function of Flow Fraction Curve Name
-       \note independent variable is normalized flow rate, current flow divided by Design Maximum Flow Rate.
+       \note independent variable is normalized flow rate, current flow divided by Design Maximum Air Flow Rate.
        \note dependent variable is modification factor multiplied by Design Power Consumption.
-       \note field is required if Speed Control Method is set to Variable
+       \note This field is required if Speed Control Method is set to Continuous or if the Number of Speeds is greater than 1 and Speed Electric Power Fraction fields are not used.
        \type object-list
        \object-list UniVariateCurves
        \object-list UniVariateTables
   N10, \field Night Ventilation Mode Pressure Rise
-       \note pressure rise to use when in night mode using AvailabilityManager:NightVentilation
+       \note Total system fan pressure rise at the fan when in night mode using AvailabilityManager:NightVentilation
        \type real
        \units Pa
        \ip-units inH2O
@@ -40674,7 +40674,7 @@ Fan,
        \minimum 0.0
        \maximum 1.0
   A8 , \field Motor Loss Zone Name
-        \note optional, if used fan motor heat losses that not added to air stream are transfered to zone as internal gains
+        \note optional, if used fan motor heat losses that not added to air stream are transferred to zone as internal gains
         \type object-list
         \object-list ZoneNames
   N12, \field Motor Loss Radiative Fraction 

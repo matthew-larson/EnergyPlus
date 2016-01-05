@@ -139,6 +139,8 @@ namespace EnergyPlus {
 			using DataHVACGlobals::SmallLoad;
 			using DataEnvironment::OutDryBulbTemp;
 			using VariableSpeedCoils::SimVariableSpeedCoils;
+			using VariableSpeedCoils::SetAirNodes; 
+			using VariableSpeedCoils::SetWaterNodes;
 
 			// Locals
 			// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -157,12 +159,15 @@ namespace EnergyPlus {
 
 			
 			// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
-			int DXCoilNum; // The WatertoAirHP that you are currently loading input into
-			int LocNum; 
-			Real64 MyLoad;
-			Real64 MaxCap;
-			Real64 MinCap;
-			Real64 OptCap;
+			int DXCoilNum(0); // The WatertoAirHP that you are currently loading input into
+			int LocNum(0); 
+			bool ErrorFound(false); 
+			Real64 MyLoad(0.0);
+			Real64 MaxCap(0.0);
+			Real64 MinCap(0.0);
+			Real64 OptCap(0.0);
+			int InNode(0); 
+			int OutNode(0); 
 
 			// Obtains and Allocates WatertoAirHP related parameters from input file
 			if (GetCoilsInputFlag) { //First time subroutine has been entered
@@ -189,6 +194,32 @@ namespace EnergyPlus {
 						", Integrated HP name=" + CompName + ", stored Integrated HP Name for that index=" + IntegratedHeatPumpUnits(DXCoilNum).Name);
 				}
 			}; 
+
+			if (false == IntegratedHeatPumpUnits(DXCoilNum).NodeConnected)
+			{
+				//air node connections
+				InNode = IntegratedHeatPumpUnits(DXCoilNum).AirInletNodeNum; 
+				OutNode = IntegratedHeatPumpUnits(DXCoilNum).AirOutletNodeNum; 
+				SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SCCoilName, ErrorFound, InNode, OutNode); 
+				SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SHCoilName, ErrorFound, InNode, OutNode);
+				SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilName, ErrorFound, InNode, OutNode);
+				SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SCDWHCoolCoilName, ErrorFound, InNode, OutNode);
+				SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SCDWHWHCoilName, ErrorFound, InNode, OutNode);
+				SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHHeatCoilName, ErrorFound, InNode, OutNode);
+				SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilName, ErrorFound, InNode, OutNode);
+
+				//water node connections
+				InNode = IntegratedHeatPumpUnits(DXCoilNum).WaterInletNodeNum;
+				OutNode = IntegratedHeatPumpUnits(DXCoilNum).WaterOutletNodeNum;
+				SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilName, ErrorFound, InNode, OutNode);
+				SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SCDWHCoolCoilName, ErrorFound, InNode, OutNode);
+				SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SCDWHWHCoilName, ErrorFound, InNode, OutNode);
+				SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHHeatCoilName, ErrorFound, InNode, OutNode);
+				SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilName, ErrorFound, InNode, OutNode);
+				SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).DWHCoilName, ErrorFound, InNode, OutNode);
+				IntegratedHeatPumpUnits(DXCoilNum).NodeConnected = true;
+			};
+
 
 			//decide working mode at the first moment
 			if (true == FirstHVACIteration)
@@ -455,6 +486,7 @@ namespace EnergyPlus {
 					ErrorsFound = true;
 				}
 
+				IntegratedHeatPumpUnits(DXCoilNum).NodeConnected = false;
 				IntegratedHeatPumpUnits(DXCoilNum).Name = AlphArray(1);
 				IntegratedHeatPumpUnits(DXCoilNum).IHPtype = "AIRSOURCE_IHP";
 

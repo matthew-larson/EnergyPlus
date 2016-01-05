@@ -133,6 +133,7 @@ namespace IntegratedHeatPumps {
 		Real64 ControlledZoneTemp; 
 		Real64 WaterFlowAccumVol;// water flow accumulated volume
 		Real64 SHDWHRunTime; 
+		bool NodeConnected; 
 		
 		// Default Constructor
 		IntegratedHeatPumpData() :

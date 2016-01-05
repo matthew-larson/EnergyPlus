@@ -838,6 +838,7 @@ namespace VariableSpeedCoils {
 			VarSpeedCoil( DXCoilNum ).AirInletNodeNum = GetOnlySingleNode( AlphArray( 2 ), ErrorsFound, CurrentModuleObject, AlphArray( 1 ), NodeType_Air, NodeConnectionType_Inlet, 1, ObjectIsNotParent );
 			VarSpeedCoil( DXCoilNum ).AirOutletNodeNum = GetOnlySingleNode( AlphArray( 3 ), ErrorsFound, CurrentModuleObject, AlphArray( 1 ), NodeType_Air, NodeConnectionType_Outlet, 1, ObjectIsNotParent );
 
+			if ((VarSpeedCoil(DXCoilNum).AirInletNodeNum > 0) && (VarSpeedCoil(DXCoilNum).AirOutletNodeNum > 0)) // IHP allows no node inputs for coil
 			TestCompSet( CurrentModuleObject, AlphArray( 1 ), AlphArray( 2 ), AlphArray( 3 ), "Air Nodes" );
 
 			if ( VarSpeedCoil( DXCoilNum ).NumOfSpeeds < 1 ) {
@@ -1540,6 +1541,7 @@ namespace VariableSpeedCoils {
 			VarSpeedCoil( DXCoilNum ).AirInletNodeNum = GetOnlySingleNode( AlphArray( 2 ), ErrorsFound, CurrentModuleObject, AlphArray( 1 ), NodeType_Air, NodeConnectionType_Inlet, 1, ObjectIsNotParent );
 			VarSpeedCoil( DXCoilNum ).AirOutletNodeNum = GetOnlySingleNode( AlphArray( 3 ), ErrorsFound, CurrentModuleObject, AlphArray( 1 ), NodeType_Air, NodeConnectionType_Outlet, 1, ObjectIsNotParent );
 
+			if ((VarSpeedCoil(DXCoilNum).AirInletNodeNum > 0) && (VarSpeedCoil(DXCoilNum).AirOutletNodeNum > 0)) // IHP allows no node inputs for coil
 			TestCompSet( CurrentModuleObject, AlphArray( 1 ), AlphArray( 2 ), AlphArray( 3 ), "Air Nodes" );
 
 			if ( VarSpeedCoil( DXCoilNum ).NumOfSpeeds < 1 ) {
@@ -1960,6 +1962,7 @@ namespace VariableSpeedCoils {
 
 			VarSpeedCoil(DXCoilNum).AirOutletNodeNum = GetOnlySingleNode(AlphArray(6), ErrorsFound, CurrentModuleObject, AlphArray(1), NodeType_Air, NodeConnectionType_Outlet, 1, ObjectIsNotParent);
 
+			if ((VarSpeedCoil(DXCoilNum).AirInletNodeNum > 0) && (VarSpeedCoil(DXCoilNum).AirOutletNodeNum > 0)) // IHP allows no node inputs for coil
 			TestCompSet(CurrentModuleObject, AlphArray(1), AlphArray(5), AlphArray(6), "Air Nodes");
 
 			//Check if the air inlet node is OA node, to justify whether the coil is placed in zone or not
@@ -1970,6 +1973,7 @@ namespace VariableSpeedCoils {
 
 			VarSpeedCoil(DXCoilNum).WaterOutletNodeNum = GetOnlySingleNode(AlphArray(8), ErrorsFound, CurrentModuleObject, AlphArray(1), NodeType_Water, NodeConnectionType_Outlet, 2, ObjectIsNotParent);
 
+			if ((VarSpeedCoil(DXCoilNum).WaterInletNodeNum > 0) && (VarSpeedCoil(DXCoilNum).WaterOutletNodeNum > 0)) // IHP allows no node inputs for coil
 			TestCompSet(CurrentModuleObject, AlphArray(1), AlphArray(7), AlphArray(8), "Water Nodes");
 
 			VarSpeedCoil(DXCoilNum).CrankcaseHeaterCapacity = NumArray(10);
@@ -5776,6 +5780,124 @@ namespace VariableSpeedCoils {
 
 		return NodeNumber;
 
+	}
+
+	void SetAirNodes(std::string const & CoilName, // must match coil names for the coil type
+		bool & ErrorsFound, // set to true if problem
+		int const InNode,
+		int const OutNode
+		)
+	{
+
+		// FUNCTION INFORMATION:
+		//       AUTHOR         Bo Shen
+		//       DATE WRITTEN   Jan 2016
+		//       MODIFIED       na
+		//       RE-ENGINEERED  na
+
+		// PURPOSE OF THIS FUNCTION:
+		//pass air side nodes from an IHP parent object to the coil object
+
+		// METHODOLOGY EMPLOYED:
+		// na
+
+		// REFERENCES:
+		// na
+
+		// Using/Aliasing
+		using InputProcessor::FindItemInList;
+
+		// Locals
+		// FUNCTION ARGUMENT DEFINITIONS:
+
+		// FUNCTION PARAMETER DEFINITIONS:
+		// na
+
+		// INTERFACE BLOCK SPECIFICATIONS:
+		// na
+
+		// DERIVED TYPE DEFINITIONS:
+		// na
+
+		// FUNCTION LOCAL VARIABLE DECLARATIONS:
+		int WhichCoil;
+
+		// Obtains and Allocates WatertoAirHP related parameters from input file
+		if (GetCoilsInputFlag) { //First time subroutine has been entered
+			GetVarSpeedCoilInput();
+			//    WaterIndex=FindGlycol('WATER') !Initialize the WaterIndex once
+			GetCoilsInputFlag = false;
+		}
+
+		WhichCoil = FindItemInList(CoilName, VarSpeedCoil);
+		if (WhichCoil != 0) {
+			VarSpeedCoil(WhichCoil).AirInletNodeNum = InNode;
+			VarSpeedCoil(WhichCoil).AirOutletNodeNum = OutNode;
+		}
+
+		if (WhichCoil == 0) {
+			ShowSevereError("SetAirNodes: Could not find Coil=\"" + CoilName + "\"");
+			ErrorsFound = true;
+		}
+	}
+
+	void SetWaterNodes(std::string const & CoilName, // must match coil names for the coil type
+		bool & ErrorsFound, // set to true if problem
+		int const InNode,
+		int const OutNode
+		)
+	{
+
+		// FUNCTION INFORMATION:
+		//       AUTHOR         Bo Shen
+		//       DATE WRITTEN   Jan 2016
+		//       MODIFIED       na
+		//       RE-ENGINEERED  na
+
+		// PURPOSE OF THIS FUNCTION:
+		//pass water side nodes from an IHP parent object to the coil object
+
+		// METHODOLOGY EMPLOYED:
+		// na
+
+		// REFERENCES:
+		// na
+
+		// Using/Aliasing
+		using InputProcessor::FindItemInList;
+
+		// Locals
+		// FUNCTION ARGUMENT DEFINITIONS:
+
+		// FUNCTION PARAMETER DEFINITIONS:
+		// na
+
+		// INTERFACE BLOCK SPECIFICATIONS:
+		// na
+
+		// DERIVED TYPE DEFINITIONS:
+		// na
+
+		// FUNCTION LOCAL VARIABLE DECLARATIONS:
+		int WhichCoil;
+
+		// Obtains and Allocates WatertoAirHP related parameters from input file
+		if (GetCoilsInputFlag) { //First time subroutine has been entered
+			GetVarSpeedCoilInput();
+			//    WaterIndex=FindGlycol('WATER') !Initialize the WaterIndex once
+			GetCoilsInputFlag = false;
+		}
+
+		WhichCoil = FindItemInList(CoilName, VarSpeedCoil);
+		if (WhichCoil != 0) {
+			VarSpeedCoil(WhichCoil).WaterInletNodeNum = InNode;
+			VarSpeedCoil(WhichCoil).WaterOutletNodeNum = OutNode;
+		}
+
+		if (WhichCoil == 0) {
+			ShowSevereError("SetAirNodes: Could not find Coil=\"" + CoilName + "\"");
+			ErrorsFound = true;
+		}
 	}
 
 	int

@@ -6020,11 +6020,13 @@ namespace SolarShading {
 				if ( ShadeFlag < 1 || ShadeFlag == SwitchableGlazing || ShadeFlag >= 10 ) { // Unshaded or switchable glazing
 					//Note: with previous defs of TBmBm & TBmDif, these come out right for Complex Fenestration
 					// WinTransBmSolar uses the directional-hemispherical transmittance
-					WinTransBmSolar( SurfNum ) = ( TBmBm + TBmDif ) * SunLitFract * CosInc * Surface( SurfNum ).Area * InOutProjSLFracMult;
+					if ( SunLitFract > 0.01 ){
+						WinTransBmSolar( SurfNum ) = ( TBmBm + TBmDif ) * SunLitFract * CosInc * Surface( SurfNum ).Area * InOutProjSLFracMult;
 
-					//added TH 12/9/2009
-					WinTransBmBmSolar = TBmBm * SunLitFract * CosInc * Surface( SurfNum ).Area * InOutProjSLFracMult; // m2
-					WinTransBmDifSolar = TBmDif * SunLitFract * CosInc * Surface( SurfNum ).Area * InOutProjSLFracMult; // m2
+						//added TH 12/9/2009
+						WinTransBmBmSolar = TBmBm * SunLitFract * CosInc * Surface( SurfNum ).Area * InOutProjSLFracMult; // m2
+						WinTransBmDifSolar = TBmDif * SunLitFract * CosInc * Surface( SurfNum ).Area * InOutProjSLFracMult; // m2
+					}
 
 				} else {
 					WinTransBmSolar( SurfNum ) = TBmAllShBlSc * SunLitFract * CosInc * Surface( SurfNum ).Area * InOutProjSLFracMult;
@@ -8469,6 +8471,9 @@ namespace SolarShading {
 				DifShdgRatioHoriz( SurfNum ) = ( WithShdgHoriz( SurfNum ) ) / ( WoShdgHoriz( SurfNum ) );
 			} else {
 				DifShdgRatioHoriz( SurfNum ) = ( WithShdgHoriz( SurfNum ) ) / ( WoShdgHoriz( SurfNum ) + Eps );
+			}
+			if ( DifShdgRatioIsoSky( SurfNum ) < 0.01 ) {
+				DifShdgRatioIsoSky( SurfNum ) = 0.0;
 			}
 		}
 

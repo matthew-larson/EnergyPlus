@@ -807,6 +807,7 @@ namespace WaterThermalTanks {
 		Array1D< Real64 > HPWHWaterMassFlowRate; // water mass flow rate during heating operation
 		Array1D< Real64 > MSAirSpeedRatio; // air speed ratio in heating mode
 		Array1D< Real64 > MSWaterSpeedRatio; // water speed ratio in heating mode
+		bool bIsIHP; //whether the HP is a part of Integrated Heat Pump
 		//end of variables for variable-speed HPWH
 
 		// Default Constructor
@@ -912,7 +913,8 @@ namespace WaterThermalTanks {
 			HPWHWaterVolFlowRate( MaxSpedLevels, 0.0 ),
 			HPWHWaterMassFlowRate( MaxSpedLevels, 0.0 ),
 			MSAirSpeedRatio( MaxSpedLevels, 0.0 ),
-			MSWaterSpeedRatio( MaxSpedLevels, 0.0 )
+			MSWaterSpeedRatio( MaxSpedLevels, 0.0 ),
+			bIsIHP(false)
 		{}
 
 		// Member Constructor
@@ -1026,7 +1028,8 @@ namespace WaterThermalTanks {
 			Array1< Real64 > const & HPWHWaterVolFlowRate,
 			Array1< Real64 > const & HPWHWaterMassFlowRate,
 			Array1< Real64 > const & MSAirSpeedRatio,
-			Array1< Real64 > const & MSWaterSpeedRatio
+			Array1< Real64 > const & MSWaterSpeedRatio,
+			bool const bIsIHP
 		) :
 			Name( Name ),
 			Type( Type ),
@@ -1137,7 +1140,8 @@ namespace WaterThermalTanks {
 			HPWHWaterVolFlowRate( MaxSpedLevels, HPWHWaterVolFlowRate ),
 			HPWHWaterMassFlowRate( MaxSpedLevels, HPWHWaterMassFlowRate ),
 			MSAirSpeedRatio( MaxSpedLevels, MSAirSpeedRatio ),
-			MSWaterSpeedRatio( MaxSpedLevels, MSWaterSpeedRatio )
+			MSWaterSpeedRatio( MaxSpedLevels, MSWaterSpeedRatio ), 
+			bIsIHP(bIsIHP)
 		{}
 
 	};

@@ -27,6 +27,17 @@ namespace IntegratedHeatPumps {
 	extern int NumIHPs; //counter for all integrated heat pumps including air-source and water-source
 	extern bool GetCoilsInputFlag; // Flag set to make sure you get input once
 
+	// operation mode
+	int const IdleMode(0);
+	int const SCMode(1);
+	int const SHMode(2);
+	int const DWHMode(3);
+	int const SCWHMatchSCMode(4);
+	int const SCWHMatchWHMode(5);
+	int const SCDWHMode(6);
+	int const SHDWHElecHeatOffMode(7);
+	int const SHDWHElecHeatOnMode(8);
+
 	// SUBROUTINE SPECIFICATIONS FOR MODULE
 
 	// Driver/Manager Routines
@@ -126,14 +137,17 @@ namespace IntegratedHeatPumps {
 		Array1D< Real64 > SHDWHSpeedRatio; // Fan speed ratio in SHDWH mode
 
 		//not initialized yet
-		std::string HPWaterHeaterName; 
-		int HPWaterHeaterTypeNum;
+		int WHtankType;
+		std::string WHtankName; 
+		int WHtankID; 
 		bool IsWHCallAvail;//whether water heating call available
+		bool CheckWHCall; 
 		int CurMode; //current working mode
 		Real64 ControlledZoneTemp; 
 		Real64 WaterFlowAccumVol;// water flow accumulated volume
 		Real64 SHDWHRunTime; 
 		bool NodeConnected; 
+		Real64 TotalHeatingEnergyRate; 
 		
 		// Default Constructor
 		IntegratedHeatPumpData() :
@@ -317,6 +331,7 @@ namespace IntegratedHeatPumps {
 		Real64 const SpeedRatio, // compressor speed ratio
 		Real64 const SensLoad, // Sensible demand load [W]
 		Real64 const LatentLoad, // Latent demand load [W]
+		bool const IsCallbyWH, //whether the call from the water heating loop or air loop, true = from water heating loop
 		bool const FirstHVACIteration, // TRUE if First iteration of simulation
 		Optional< Real64 const > OnOffAirFlowRat = _ // ratio of comp on to comp off air flow rate
 	);
@@ -346,6 +361,59 @@ namespace IntegratedHeatPumps {
 	
 	void
 	UpdateIHP( int const DXCoilNum );
+
+	void
+		DecideWorkMode(int const DXCoilNum,
+		Real64 const SensLoad, // Sensible demand load [W]
+		Real64 const LatentLoad // Latent demand load [W]
+		);
+
+	int 
+		GetCurWorkMode(int const DXCoilNum);
+
+	int
+		GetLowSpeedNumIHP(int const DXCoilNum);
+	int
+		GetMaxSpeedNumIHP(int const DXCoilNum);
+
+	Real64
+		GetAirVolFlowRateIHP(int const DXCoilNum, int const SpeedNum, Real64 const SpeedRatio);
+
+	Real64
+		GetWaterVolFlowRateIHP(int const DXCoilNum, int const SpeedNum, Real64 const SpeedRatio);
+
+	Real64
+		GetAirMassFlowRateIHP(int const DXCoilNum, int const SpeedNum, Real64 const SpeedRatio);
+
+	int
+		GetCoilIndexIHP(
+		std::string const & CoilType, // must match coil types in this module
+		std::string const & CoilName, // must match coil names for the coil type
+		bool & ErrorsFound // set to true if problem
+		);
+
+	int
+		GetCoilInletNodeIHP(
+		std::string const & CoilType, // must match coil types in this module
+		std::string const & CoilName, // must match coil names for the coil type
+		bool & ErrorsFound // set to true if problem
+		);
+
+	Real64
+		GetCoilCapacityIHP(
+		std::string const & CoilType, // must match coil types in this module
+		std::string const & CoilName, // must match coil names for the coil type
+		int const Mode,//mode coil type
+		bool & ErrorsFound // set to true if problem
+		);
+
+	int
+		GetIHPCoilPLFFPLR(
+		std::string const & CoilType, // must match coil types in this module
+		std::string const & CoilName, // must match coil names for the coil type
+		int const Mode,//mode coil type
+		bool & ErrorsFound // set to true if problem
+		);
 	
 	//     NOTICE
 

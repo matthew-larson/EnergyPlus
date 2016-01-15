@@ -32,6 +32,7 @@
 #include <UtilityRoutines.hh>
 #include <WaterManager.hh>
 #include <WaterThermalTanks.hh>
+#include <InputProcessor.hh>
 
 namespace EnergyPlus {
 
@@ -58,17 +59,6 @@ namespace EnergyPlus {
 		// Identifier is VarSpeedCoil
 		int NumIHPs(0); // The Number of Water to Air Heat Pumps found in the Input
 		bool GetCoilsInputFlag(true); 
-
-		// operation mode
-		int const IdleMode(0);
-		int const SCMode(1);
-		int const SHMode(2);
-		int const DWHMode(3);
-		int const SCWHMatchSCMode(4);
-		int const SCWHMatchWHMode(5);
-		int const SCDWHMode(6);
-		int const SHDWHElecHeatOffMode(7);
-		int const SHDWHElecHeatOnMode(8);
 
 		// SUBROUTINE SPECIFICATIONS FOR MODULE
 
@@ -114,6 +104,7 @@ namespace EnergyPlus {
 			Real64 const SpeedRatio, // compressor speed ratio
 			Real64 const SensLoad, // Sensible demand load [W]
 			Real64 const LatentLoad, // Latent demand load [W]
+			bool const IsCallbyWH, //whether the call from the water heating loop or air loop, true = from water heating loop
 			bool const FirstHVACIteration, // TRUE if First iteration of simulation
 			Optional< Real64 const > OnOffAirFlowRat // ratio of comp on to comp off air flow rate
 			)
@@ -135,12 +126,7 @@ namespace EnergyPlus {
 			// Using/Aliasing
 			using InputProcessor::FindItemInList;
 			using General::TrimSigDigits;
-			using WaterThermalTanks::SimWaterThermalTank;
-			using DataHVACGlobals::SmallLoad;
-			using DataEnvironment::OutDryBulbTemp;
 			using VariableSpeedCoils::SimVariableSpeedCoils;
-			using VariableSpeedCoils::SetAirNodes; 
-			using VariableSpeedCoils::SetWaterNodes;
 
 			// Locals
 			// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -166,8 +152,6 @@ namespace EnergyPlus {
 			Real64 MaxCap(0.0);
 			Real64 MinCap(0.0);
 			Real64 OptCap(0.0);
-			int InNode(0); 
-			int OutNode(0); 
 
 			// Obtains and Allocates WatertoAirHP related parameters from input file
 			if (GetCoilsInputFlag) { //First time subroutine has been entered
@@ -195,100 +179,6 @@ namespace EnergyPlus {
 				}
 			}; 
 
-			if (false == IntegratedHeatPumpUnits(DXCoilNum).NodeConnected)
-			{
-				//air node connections
-				InNode = IntegratedHeatPumpUnits(DXCoilNum).AirInletNodeNum; 
-				OutNode = IntegratedHeatPumpUnits(DXCoilNum).AirOutletNodeNum; 
-				SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SCCoilName, ErrorFound, InNode, OutNode); 
-				SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SHCoilName, ErrorFound, InNode, OutNode);
-				SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilName, ErrorFound, InNode, OutNode);
-				SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SCDWHCoolCoilName, ErrorFound, InNode, OutNode);
-				SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SCDWHWHCoilName, ErrorFound, InNode, OutNode);
-				SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHHeatCoilName, ErrorFound, InNode, OutNode);
-				SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilName, ErrorFound, InNode, OutNode);
-
-				//water node connections
-				InNode = IntegratedHeatPumpUnits(DXCoilNum).WaterInletNodeNum;
-				OutNode = IntegratedHeatPumpUnits(DXCoilNum).WaterOutletNodeNum;
-				SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilName, ErrorFound, InNode, OutNode);
-				SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SCDWHCoolCoilName, ErrorFound, InNode, OutNode);
-				SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SCDWHWHCoilName, ErrorFound, InNode, OutNode);
-				SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHHeatCoilName, ErrorFound, InNode, OutNode);
-				SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilName, ErrorFound, InNode, OutNode);
-				SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).DWHCoilName, ErrorFound, InNode, OutNode);
-				IntegratedHeatPumpUnits(DXCoilNum).NodeConnected = true;
-			};
-
-
-			//decide working mode at the first moment
-			if (true == FirstHVACIteration)
-			{
-				//check if there is a water heating call
-				SimWaterThermalTank(IntegratedHeatPumpUnits(DXCoilNum).HPWaterHeaterTypeNum, IntegratedHeatPumpUnits(DXCoilNum).HPWaterHeaterName,
-					LocNum, false, false, MyLoad, MaxCap, MinCap, OptCap, FirstHVACIteration);
-
-				if (false == IntegratedHeatPumpUnits(DXCoilNum).IsWHCallAvail)//no water heating call
-				{
-
-					if ((SensLoad < (-1.0 * SmallLoad)) || (LatentLoad < (-1.0 * SmallLoad)))
-					{
-						IntegratedHeatPumpUnits(DXCoilNum).CurMode = SCMode; 
-					}
-					else if (SensLoad > SmallLoad)
-					{
-						if ((IntegratedHeatPumpUnits(DXCoilNum).ControlledZoneTemp > IntegratedHeatPumpUnits(DXCoilNum).TindoorOverCoolAllow) &&
-							(OutDryBulbTemp > IntegratedHeatPumpUnits(DXCoilNum).TambientOverCoolAllow))
-							IntegratedHeatPumpUnits(DXCoilNum).CurMode = IdleMode;
-						else
-							IntegratedHeatPumpUnits(DXCoilNum).CurMode = SHMode;
-					}
-					else
-					{
-						IntegratedHeatPumpUnits(DXCoilNum).CurMode = IdleMode;
-					}
-				}
-				//below has water heating calls
-				else if ((SensLoad < (-1.0 * SmallLoad)) || (LatentLoad < (-1.0 * SmallLoad)))//simultaneous SC and WH calls
-				{
-					if (IntegratedHeatPumpUnits(DXCoilNum).WaterFlowAccumVol < IntegratedHeatPumpUnits(DXCoilNum).WaterVolSCDWH)
-					{
-						IntegratedHeatPumpUnits(DXCoilNum).CurMode = SCDWHMode;
-					}
-					else
-					{
-						if (1 == IntegratedHeatPumpUnits(DXCoilNum).ModeMatchSCWH) IntegratedHeatPumpUnits(DXCoilNum).CurMode = SCWHMatchWHMode;
-						else IntegratedHeatPumpUnits(DXCoilNum).CurMode = SCWHMatchSCMode;
-					}; 
-					
-				}
-				else if ((IntegratedHeatPumpUnits(DXCoilNum).ControlledZoneTemp > IntegratedHeatPumpUnits(DXCoilNum).TindoorOverCoolAllow) &&
-					(OutDryBulbTemp > IntegratedHeatPumpUnits(DXCoilNum).TambientOverCoolAllow))
-				{
-					IntegratedHeatPumpUnits(DXCoilNum).CurMode = SCWHMatchWHMode;
-				}
-				else if ((IntegratedHeatPumpUnits(DXCoilNum).ControlledZoneTemp > IntegratedHeatPumpUnits(DXCoilNum).TindoorWHHighPriority) &&
-					(OutDryBulbTemp > IntegratedHeatPumpUnits(DXCoilNum).TambientWHHighPriority))
-				{
-					IntegratedHeatPumpUnits(DXCoilNum).CurMode = DWHMode;
-				}
-				else if (SensLoad > SmallLoad)
-				{
-					if (IntegratedHeatPumpUnits(DXCoilNum).SHDWHRunTime > IntegratedHeatPumpUnits(DXCoilNum).TimeLimitSHDWH)
-					{
-						IntegratedHeatPumpUnits(DXCoilNum).CurMode = SHDWHElecHeatOnMode; 
-					}
-					else
-					{
-						IntegratedHeatPumpUnits(DXCoilNum).CurMode = SHDWHElecHeatOffMode;
-					};
-				}
-				else
-				{
-					IntegratedHeatPumpUnits(DXCoilNum).CurMode = DWHMode;
-				}
-
-			};
 
 			switch (IntegratedHeatPumpUnits(DXCoilNum).CurMode)
 			{
@@ -385,6 +275,8 @@ namespace EnergyPlus {
 			using WaterManager::SetupTankSupplyComponent;
 			using ScheduleManager::GetScheduleIndex;
 			using VariableSpeedCoils::GetCoilIndexVariableSpeed;
+			using VariableSpeedCoils::SetAirNodes;
+			using VariableSpeedCoils::SetWaterNodes;
 
 			// Locals
 			// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -434,6 +326,8 @@ namespace EnergyPlus {
 			Real64 CurveVal; // Used to verify modifier curves equal 1 at rated conditions
 			Real64 WHInletAirTemp; // Used to pass proper inlet air temp to HPWH DX coil performance curves
 			Real64 WHInletWaterTemp; // Used to pass proper inlet water temp to HPWH DX coil performance curves
+			int InNode(0);
+			int OutNode(0);
 
 
 			NumASIHPs = GetNumObjectsFound("COILSYSTEM:INTEGRATEDHEATPUMP:AIRSOURCE");
@@ -673,6 +567,32 @@ namespace EnergyPlus {
 				IntegratedHeatPumpUnits(DXCoilNum).MinSpedSCDWH = int(NumArray(8));
 				IntegratedHeatPumpUnits(DXCoilNum).TimeLimitSHDWH = NumArray(9);
 				IntegratedHeatPumpUnits(DXCoilNum).MinSpedSHDWH = int(NumArray(10));
+
+				if (false == IntegratedHeatPumpUnits(DXCoilNum).NodeConnected)
+				{
+					//air node connections
+					InNode = IntegratedHeatPumpUnits(DXCoilNum).AirInletNodeNum;
+					OutNode = IntegratedHeatPumpUnits(DXCoilNum).AirOutletNodeNum;
+					SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SCCoilName, ErrorsFound, InNode, OutNode);
+					SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SHCoilName, ErrorsFound, InNode, OutNode);
+					SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilName, ErrorsFound, InNode, OutNode);
+					SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SCDWHCoolCoilName, ErrorsFound, InNode, OutNode);
+					SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SCDWHWHCoilName, ErrorsFound, InNode, OutNode);
+					SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHHeatCoilName, ErrorsFound, InNode, OutNode);
+					SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilName, ErrorsFound, InNode, OutNode);
+
+					//water node connections
+					InNode = IntegratedHeatPumpUnits(DXCoilNum).WaterInletNodeNum;
+					OutNode = IntegratedHeatPumpUnits(DXCoilNum).WaterOutletNodeNum;
+					SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilName, ErrorsFound, InNode, OutNode);
+					SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SCDWHCoolCoilName, ErrorsFound, InNode, OutNode);
+					SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SCDWHWHCoilName, ErrorsFound, InNode, OutNode);
+					SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHHeatCoilName, ErrorsFound, InNode, OutNode);
+					SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilName, ErrorsFound, InNode, OutNode);
+					SetWaterNodes(IntegratedHeatPumpUnits(DXCoilNum).DWHCoilName, ErrorsFound, InNode, OutNode);
+					IntegratedHeatPumpUnits(DXCoilNum).NodeConnected = true;
+				};
+
 			}
 
 
@@ -721,6 +641,482 @@ namespace EnergyPlus {
 
 		}
 
+		void
+			DecideWorkMode(int const DXCoilNum,
+			Real64 const SensLoad, // Sensible demand load [W]
+			Real64 const LatentLoad // Latent demand load [W]
+			)//shall be called from a air loop parent
+		{
+			using DataHVACGlobals::SmallLoad;
+			using DataEnvironment::OutDryBulbTemp;
+			using WaterThermalTanks::SimWaterThermalTank;
+			using WaterThermalTanks::GetWaterThermalTankInput;
+
+			Real64 MyLoad(0.0);
+			Real64 MaxCap(0.0); 
+			Real64 MinCap(0.0);
+			Real64 OptCap(0.0);
+
+			// Obtains and Allocates WatertoAirHP related parameters from input file
+			if (GetCoilsInputFlag) { //First time subroutine has been entered
+				GetIHPInput();
+				//    WaterIndex=FindGlycol('WATER') !Initialize the WaterIndex once
+				GetCoilsInputFlag = false;
+			}
+						
+			//decide working mode at the first moment
+			//check if there is a water heating call
+			IntegratedHeatPumpUnits(DXCoilNum).IsWHCallAvail = false; 
+			IntegratedHeatPumpUnits(DXCoilNum).CheckWHCall = true; 
+			if (0 == IntegratedHeatPumpUnits(DXCoilNum).WHtankID)//not initialized yet
+			{
+				IntegratedHeatPumpUnits(DXCoilNum).IsWHCallAvail = false;
+			}
+			else
+			{
+				SimWaterThermalTank(
+					IntegratedHeatPumpUnits(DXCoilNum).WHtankType, IntegratedHeatPumpUnits(DXCoilNum).WHtankName,
+					IntegratedHeatPumpUnits(DXCoilNum).WHtankID,
+					false, false,
+					MyLoad, MaxCap, MinCap, OptCap, true // TRUE if First iteration of simulation
+					);
+			}
+
+			IntegratedHeatPumpUnits(DXCoilNum).CheckWHCall = false;
+
+			if (false == IntegratedHeatPumpUnits(DXCoilNum).IsWHCallAvail)//no water heating call
+			{
+				if ((SensLoad < (-1.0 * SmallLoad)) || (LatentLoad < (-1.0 * SmallLoad)))
+				{
+					IntegratedHeatPumpUnits(DXCoilNum).CurMode = SCMode;
+				}
+				else if (SensLoad > SmallLoad)
+				{
+					if ((IntegratedHeatPumpUnits(DXCoilNum).ControlledZoneTemp > IntegratedHeatPumpUnits(DXCoilNum).TindoorOverCoolAllow) &&
+						(OutDryBulbTemp > IntegratedHeatPumpUnits(DXCoilNum).TambientOverCoolAllow))
+						IntegratedHeatPumpUnits(DXCoilNum).CurMode = IdleMode;
+					else
+						IntegratedHeatPumpUnits(DXCoilNum).CurMode = SHMode;
+				}
+				else
+				{
+					IntegratedHeatPumpUnits(DXCoilNum).CurMode = IdleMode;
+				}
+			}
+			//below has water heating calls
+			else if ((SensLoad < (-1.0 * SmallLoad)) || (LatentLoad < (-1.0 * SmallLoad)))//simultaneous SC and WH calls
+			{
+				if (IntegratedHeatPumpUnits(DXCoilNum).WaterFlowAccumVol < IntegratedHeatPumpUnits(DXCoilNum).WaterVolSCDWH)
+				{
+					IntegratedHeatPumpUnits(DXCoilNum).CurMode = SCDWHMode;
+				}
+				else
+				{
+					if (1 == IntegratedHeatPumpUnits(DXCoilNum).ModeMatchSCWH) IntegratedHeatPumpUnits(DXCoilNum).CurMode = SCWHMatchWHMode;
+					else IntegratedHeatPumpUnits(DXCoilNum).CurMode = SCWHMatchSCMode;
+				};
+
+			}
+			else if ((IntegratedHeatPumpUnits(DXCoilNum).ControlledZoneTemp > IntegratedHeatPumpUnits(DXCoilNum).TindoorOverCoolAllow) &&
+				(OutDryBulbTemp > IntegratedHeatPumpUnits(DXCoilNum).TambientOverCoolAllow))
+			{
+				IntegratedHeatPumpUnits(DXCoilNum).CurMode = SCWHMatchWHMode;
+			}
+			else if ((IntegratedHeatPumpUnits(DXCoilNum).ControlledZoneTemp > IntegratedHeatPumpUnits(DXCoilNum).TindoorWHHighPriority) &&
+				(OutDryBulbTemp > IntegratedHeatPumpUnits(DXCoilNum).TambientWHHighPriority))
+			{
+				IntegratedHeatPumpUnits(DXCoilNum).CurMode = DWHMode;
+			}
+			else if (SensLoad > SmallLoad)
+			{
+				if (IntegratedHeatPumpUnits(DXCoilNum).SHDWHRunTime > IntegratedHeatPumpUnits(DXCoilNum).TimeLimitSHDWH)
+				{
+					IntegratedHeatPumpUnits(DXCoilNum).CurMode = SHDWHElecHeatOnMode;
+				}
+				else
+				{
+					IntegratedHeatPumpUnits(DXCoilNum).CurMode = SHDWHElecHeatOffMode;
+				};
+			}
+			else
+			{
+				IntegratedHeatPumpUnits(DXCoilNum).CurMode = DWHMode;
+			}
+		}
+
+		int
+			GetCurWorkMode(int const DXCoilNum)
+		{
+			// Obtains and Allocates WatertoAirHP related parameters from input file
+			if (GetCoilsInputFlag) { //First time subroutine has been entered
+				GetIHPInput();
+				//    WaterIndex=FindGlycol('WATER') !Initialize the WaterIndex once
+				GetCoilsInputFlag = false;
+			}
+			return(IntegratedHeatPumpUnits(DXCoilNum).CurMode);
+		}
+
+
+		int
+			GetCoilIndexIHP(
+			std::string const & CoilType, // must match coil types in this module
+			std::string const & CoilName, // must match coil names for the coil type
+			bool & ErrorsFound // set to true if problem
+			)
+		{
+
+			// FUNCTION INFORMATION:
+			//       AUTHOR         Bo Shen
+			//       DATE WRITTEN   Jan 2015
+			//       MODIFIED       na
+			//       RE-ENGINEERED  na
+
+			// PURPOSE OF THIS FUNCTION:
+			// This function looks up the coil index for the given coil and returns it.  If
+			// incorrect coil type or name is given, ErrorsFound is returned as true and index is returned
+			// as zero.
+
+			// METHODOLOGY EMPLOYED:
+			// na
+
+			// REFERENCES:
+			// na
+
+			// Using/Aliasing
+			using InputProcessor::FindItemInList;
+
+			// Return value
+			int IndexNum; // returned index of matched coil
+
+			// Locals
+			// FUNCTION ARGUMENT DEFINITIONS:
+
+			// FUNCTION PARAMETER DEFINITIONS:
+			// na
+
+			// INTERFACE BLOCK SPECIFICATIONS:
+			// na
+
+			// DERIVED TYPE DEFINITIONS:
+			// na
+
+			// FUNCTION LOCAL VARIABLE DECLARATIONS:
+			// na
+
+			// Obtains and Allocates WatertoAirHP related parameters from input file
+			if (GetCoilsInputFlag) { //First time subroutine has been entered
+				GetIHPInput();
+				//    WaterIndex=FindGlycol('WATER') !Initialize the WaterIndex once
+				GetCoilsInputFlag = false;
+			}
+
+			IndexNum = FindItemInList(CoilName, IntegratedHeatPumpUnits);
+
+			if (IndexNum == 0) {
+				ShowSevereError("GetCoilIndexIHP: Could not find CoilType=\"" + CoilType + "\" with Name=\"" + CoilName + "\"");
+				ErrorsFound = true;
+			}
+
+			return IndexNum;
+
+		}
+
+		int
+			GetCoilInletNodeIHP(
+			std::string const & CoilType, // must match coil types in this module
+			std::string const & CoilName, // must match coil names for the coil type
+			bool & ErrorsFound // set to true if problem
+			)
+
+		{
+
+			// FUNCTION INFORMATION:
+			//       AUTHOR         Bo Shen
+			//       DATE WRITTEN   Jan 2016
+			//       MODIFIED       na
+			//       RE-ENGINEERED  na
+
+			// PURPOSE OF THIS FUNCTION:
+			// This function looks up the given coil and returns the inlet node.  If
+			// incorrect coil type or name is given, ErrorsFound is returned as true and value is returned
+			// as zero.
+
+			// METHODOLOGY EMPLOYED:
+			// na
+
+			// REFERENCES:
+			// na
+
+			// Using/Aliasing
+			using InputProcessor::FindItemInList;
+
+			// Return value
+			int NodeNumber; // returned outlet node of matched coil
+
+			// Locals
+			// FUNCTION ARGUMENT DEFINITIONS:
+			// FUNCTION PARAMETER DEFINITIONS:
+			// na
+
+			// INTERFACE BLOCK SPECIFICATIONS:
+			// na
+
+			// DERIVED TYPE DEFINITIONS:
+			// na
+
+			// FUNCTION LOCAL VARIABLE DECLARATIONS:
+			int WhichCoil;
+
+			// Obtains and Allocates WatertoAirHP related parameters from input file
+			if (GetCoilsInputFlag) { //First time subroutine has been entered
+				GetIHPInput();
+				//    WaterIndex=FindGlycol('WATER') !Initialize the WaterIndex once
+				GetCoilsInputFlag = false;
+			}
+
+			WhichCoil = FindItemInList(CoilName, IntegratedHeatPumpUnits);
+			if (WhichCoil != 0) {
+				NodeNumber = IntegratedHeatPumpUnits(WhichCoil).AirInletNodeNum;
+			}
+
+			if (WhichCoil == 0) {
+				ShowSevereError("GetCoilInletNodeIHP: Could not find CoilType=\"" + CoilType + "\" with Name=\"" + CoilName + "\"");
+				ErrorsFound = true;
+				NodeNumber = 0;
+			}
+
+			return NodeNumber;
+
+		}
+
+		int
+			GetIHPCoilPLFFPLR(
+			std::string const & CoilType, // must match coil types in this module
+			std::string const & CoilName, // must match coil names for the coil type
+			int const Mode,//mode coil type
+			bool & ErrorsFound // set to true if problem
+			)
+		{
+			// FUNCTION INFORMATION:
+			//       AUTHOR         Bo Shen
+			//       DATE WRITTEN   Jan, 2016
+			//       MODIFIED       na
+			//       RE-ENGINEERED  na
+
+			// PURPOSE OF THIS FUNCTION:
+			// This function looks up the given coil and returns PLR curve index.  If
+			// incorrect coil type or name is given, ErrorsFound is returned as true and value is returned
+			// as zero.
+
+			// METHODOLOGY EMPLOYED:
+			// na
+
+			// REFERENCES:
+			// na
+
+			// Using/Aliasing
+			using InputProcessor::FindItemInList;
+			using VariableSpeedCoils::GetVSCoilPLFFPLR;
+
+			// Return value
+			int PLRNumber; // returned outlet node of matched coil
+
+			// Locals
+			// FUNCTION ARGUMENT DEFINITIONS:
+			// FUNCTION PARAMETER DEFINITIONS:
+			// na
+
+			// INTERFACE BLOCK SPECIFICATIONS:
+			// na
+
+			// DERIVED TYPE DEFINITIONS:
+			// na
+
+			// FUNCTION LOCAL VARIABLE DECLARATIONS:
+			int WhichCoil;
+
+			// Obtains and Allocates WatertoAirHP related parameters from input file
+			if (GetCoilsInputFlag) { //First time subroutine has been entered
+				GetIHPInput();
+				//    WaterIndex=FindGlycol('WATER') !Initialize the WaterIndex once
+				GetCoilsInputFlag = false;
+			}
+
+			WhichCoil = FindItemInList(CoilName, IntegratedHeatPumpUnits);
+			if (WhichCoil != 0) {
+
+				switch (Mode)
+				{
+				case IdleMode:
+					break;
+				case SCMode:
+					PLRNumber = 
+						GetVSCoilPLFFPLR(IntegratedHeatPumpUnits(WhichCoil).SCCoilType, IntegratedHeatPumpUnits(WhichCoil).SCCoilName, ErrorsFound);
+					break;
+				case SHMode:
+					PLRNumber =
+						GetVSCoilPLFFPLR(IntegratedHeatPumpUnits(WhichCoil).SHCoilType, IntegratedHeatPumpUnits(WhichCoil).SHCoilName, ErrorsFound);
+					break;
+				case DWHMode:
+					PLRNumber =
+						GetVSCoilPLFFPLR(IntegratedHeatPumpUnits(WhichCoil).DWHCoilType, IntegratedHeatPumpUnits(WhichCoil).DWHCoilName, ErrorsFound);
+					break;
+				case SCWHMatchSCMode:
+				case SCWHMatchWHMode:
+					PLRNumber =
+						GetVSCoilPLFFPLR(IntegratedHeatPumpUnits(WhichCoil).SCWHCoilType, IntegratedHeatPumpUnits(WhichCoil).SCWHCoilName, ErrorsFound);
+					break;
+				default:
+					ShowSevereError("GetIHPCoilPLFFPLR: wrong mode choice=\"" + CoilType + "\" with Name=\"" + CoilName + "\"");
+					ErrorsFound = true;
+					PLRNumber = 0;
+					break;
+				}
+			}
+			else {
+				WhichCoil = 0;
+			}
+
+			if (WhichCoil == 0) {
+				ShowSevereError("GetIHPCoilPLFFPLR: Could not find CoilType=\"" + CoilType + "\" with Name=\"" + CoilName + "\"");
+				ErrorsFound = true;
+				PLRNumber = 0;
+			}
+
+			return PLRNumber;
+		}
+
+		
+
+		Real64
+			GetCoilCapacityIHP(
+			std::string const & CoilType, // must match coil types in this module
+			std::string const & CoilName, // must match coil names for the coil type
+			int const Mode,//mode coil type
+			bool & ErrorsFound // set to true if problem
+			)
+		{
+
+			// FUNCTION INFORMATION:
+			//       AUTHOR         Bo Shen
+			//       DATE WRITTEN   Jan 2016
+			//       MODIFIED       na
+			//       RE-ENGINEERED  na
+
+			// PURPOSE OF THIS FUNCTION:
+			// This function looks up the rated coil capacity at the nominal speed level for the given coil and returns it.  If
+			// incorrect coil type or name is given, ErrorsFound is returned as true and capacity is returned
+			// as negative.
+
+			// METHODOLOGY EMPLOYED:
+			// na
+
+			// REFERENCES:
+			// na
+
+			// Using/Aliasing
+			using InputProcessor::FindItemInList;
+			using VariableSpeedCoils::GetCoilCapacityVariableSpeed; 
+
+			// Return value
+			Real64 CoilCapacity; // returned capacity of matched coil
+
+			// Locals
+			// FUNCTION ARGUMENT DEFINITIONS:
+
+			// FUNCTION PARAMETER DEFINITIONS:
+			// na
+
+			// INTERFACE BLOCK SPECIFICATIONS:
+			// na
+
+			// DERIVED TYPE DEFINITIONS:
+			// na
+
+			// FUNCTION LOCAL VARIABLE DECLARATIONS:
+			int WhichCoil;
+
+			// Obtains and Allocates WatertoAirHP related parameters from input file
+			if (GetCoilsInputFlag) { //First time subroutine has been entered
+				GetIHPInput();
+				//    WaterIndex=FindGlycol('WATER') !Initialize the WaterIndex once
+				GetCoilsInputFlag = false;
+			}
+
+			WhichCoil = FindItemInList(CoilName, IntegratedHeatPumpUnits);
+			if (WhichCoil != 0) {
+
+				switch (Mode)
+				{
+				case IdleMode:
+					break;
+				case SCMode:
+					CoilCapacity =
+						GetCoilCapacityVariableSpeed(IntegratedHeatPumpUnits(WhichCoil).SCCoilType, IntegratedHeatPumpUnits(WhichCoil).SCCoilName, ErrorsFound);
+					break;
+				case SHMode:
+					CoilCapacity =
+						GetCoilCapacityVariableSpeed(IntegratedHeatPumpUnits(WhichCoil).SHCoilType, IntegratedHeatPumpUnits(WhichCoil).SHCoilName, ErrorsFound);
+					break;
+				case DWHMode:
+					CoilCapacity =
+						GetCoilCapacityVariableSpeed(IntegratedHeatPumpUnits(WhichCoil).DWHCoilType, IntegratedHeatPumpUnits(WhichCoil).DWHCoilName, ErrorsFound);
+					break;
+				case SCWHMatchSCMode:
+				case SCWHMatchWHMode:
+					CoilCapacity =
+						GetCoilCapacityVariableSpeed(IntegratedHeatPumpUnits(WhichCoil).SCWHCoilType, IntegratedHeatPumpUnits(WhichCoil).SCWHCoilName, ErrorsFound);
+					break;
+				default:
+					ShowSevereError("GetIHPCoilPLFFPLR: wrong mode choice=\"" + CoilType + "\" with Name=\"" + CoilName + "\"");
+					ErrorsFound = true;
+					CoilCapacity = -1000.0;
+					break;
+				}
+			}
+			else {
+				WhichCoil = 0;
+			}
+
+			if (WhichCoil == 0) {
+				ShowSevereError("GetCoilCapacityVariableSpeed: Could not find CoilType=\"" + CoilType + "\" with Name=\"" + CoilName + "\"");
+				ErrorsFound = true;
+				CoilCapacity = -1000.0;
+			}
+
+			return CoilCapacity;
+
+		}
+
+		int
+			GetLowSpeedNumIHP(int const DXCoilNum)
+		{
+			return(0); 
+		}
+
+		int
+			GetMaxSpeedNumIHP(int const DXCoilNum)
+		{
+			return(0);
+		}
+
+		Real64
+			GetAirVolFlowRateIHP(int const DXCoilNum, int const SpeedNum, Real64 const SpeedRatio)
+		{
+			return(0.0); 
+		}
+
+		Real64
+			GetWaterVolFlowRateIHP(int const DXCoilNum, int const SpeedNum, Real64 const SpeedRatio)
+		{
+			return(0.0);
+		}
+
+		Real64
+			GetAirMassFlowRateIHP(int const DXCoilNum, int const SpeedNum, Real64 const SpeedRatio)
+		{
+			return(0.0);
+		}
 		
 
 		//     NOTICE

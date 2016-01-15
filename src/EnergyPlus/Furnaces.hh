@@ -225,6 +225,7 @@ namespace Furnaces {
 		Array1D< Real64 > CoolMassFlowRate; // Supply air mass flow rate during cooling operation
 		Array1D< Real64 > MSHeatingSpeedRatio; // Fan speed ratio in heating mode
 		Array1D< Real64 > MSCoolingSpeedRatio; // Fan speed ratio in cooling mode
+		bool bIsIHP;
 		int CompSpeedNum;
 		Real64 CompSpeedRatio;
 		int ErrIndexCyc;
@@ -365,6 +366,7 @@ namespace Furnaces {
 			CoolMassFlowRate( MaxSpedLevels, 0.0 ),
 			MSHeatingSpeedRatio( MaxSpedLevels, 0.0 ),
 			MSCoolingSpeedRatio( MaxSpedLevels, 0.0 ),
+			bIsIHP(false),
 			CompSpeedNum( 0 ),
 			CompSpeedRatio( 0.0 ),
 			ErrIndexCyc( 0 ),
@@ -509,6 +511,7 @@ namespace Furnaces {
 			Array1< Real64 > const & CoolMassFlowRate, // Supply air mass flow rate during cooling operation
 			Array1< Real64 > const & MSHeatingSpeedRatio, // Fan speed ratio in heating mode
 			Array1< Real64 > const & MSCoolingSpeedRatio, // Fan speed ratio in cooling mode
+			bool const bIsIHP, 
 			int const CompSpeedNum,
 			Real64 const CompSpeedRatio,
 			int const ErrIndexCyc,
@@ -650,6 +653,7 @@ namespace Furnaces {
 			CoolMassFlowRate( MaxSpedLevels, CoolMassFlowRate ),
 			MSHeatingSpeedRatio( MaxSpedLevels, MSHeatingSpeedRatio ),
 			MSCoolingSpeedRatio( MaxSpedLevels, MSCoolingSpeedRatio ),
+			bIsIHP(bIsIHP),
 			CompSpeedNum( CompSpeedNum ),
 			CompSpeedRatio( CompSpeedRatio ),
 			ErrIndexCyc( ErrIndexCyc ),

@@ -148,6 +148,9 @@ namespace IntegratedHeatPumps {
 		Real64 SHDWHRunTime; 
 		bool NodeConnected; 
 		Real64 TotalHeatingEnergyRate; 
+		Real64 MaxFanCoolVolFlowRate;// max fan cooling volumetric flow rate
+		Real64 MaxFanHeatVolFlowRate;// max fan heating volumetric flow rate
+
 		
 		// Default Constructor
 		IntegratedHeatPumpData() :

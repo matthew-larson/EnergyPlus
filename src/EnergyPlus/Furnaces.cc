@@ -839,6 +839,13 @@ namespace Furnaces {
 		}
 		CheckEquipName.dimension( NumFurnaces, true );
 
+		for (IHPCoilIndex = 1; IHPCoilIndex <= NumFurnaces; ++IHPCoilIndex)//clear IHP flag
+		{
+			Furnace(IHPCoilIndex).bIsIHP = false;
+		};
+		IHPCoilIndex = 0; 
+
+
 		// Get the data for the HeatOnly Furnace
 		for ( HeatOnlyNum = 1; HeatOnlyNum <= NumHeatOnly + NumUnitaryHeatOnly; ++HeatOnlyNum ) {
 
@@ -4312,6 +4319,7 @@ namespace Furnaces {
 		using PlantUtilities::SetComponentFlowRate;
 		using PlantUtilities::InitComponentNodes;
 		using Fans::GetFanVolFlow;
+		using IntegratedHeatPumps::IntegratedHeatPumpUnits; 
 
 		// Locals
 		// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -4378,6 +4386,7 @@ namespace Furnaces {
 		int OutNode; // Outlet node number in MSHP loop
 		Real64 RhoAir; // Air density at InNode
 		static bool MyAirLoopPass( true ); // one time allocation flag
+		int IHPIndex(0); //coil id of IHP coil
 
 		InNode = Furnace( FurnaceNum ).FurnaceInletNodeNum;
 		OutNode = Furnace( FurnaceNum ).FurnaceOutletNodeNum;
@@ -4858,6 +4867,14 @@ namespace Furnaces {
 			if ( Furnace( FurnaceNum ).CheckFanFlow ) {
 				CurrentModuleObject = "AirLoopHVAC:UnitaryHeatPump:VariableSpeed";
 				GetFanVolFlow( Furnace( FurnaceNum ).FanIndex, Furnace( FurnaceNum ).FanVolFlow );
+
+				if (true == Furnace(FurnaceNum).bIsIHP)//set max fan flow rate to the IHP collection
+				{
+					IHPIndex = Furnace(FurnaceNum).CoolingCoilIndex; 
+					IntegratedHeatPumpUnits(IHPIndex).MaxFanCoolVolFlowRate = Furnace(FurnaceNum).FanVolFlow; 
+					IntegratedHeatPumpUnits(IHPIndex).MaxFanHeatVolFlowRate = Furnace(FurnaceNum).FanVolFlow;
+				}; 
+
 				if ( Furnace( FurnaceNum ).FanVolFlow != AutoSize ) {
 					//     Check fan versus system supply air flow rates
 					if ( Furnace( FurnaceNum ).FanVolFlow + 1e-10 < Furnace( FurnaceNum ).CoolVolumeFlowRate( NumOfSpeedCooling ) ) {

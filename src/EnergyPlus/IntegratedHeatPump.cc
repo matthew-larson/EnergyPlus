@@ -127,6 +127,7 @@ namespace EnergyPlus {
 			using InputProcessor::FindItemInList;
 			using General::TrimSigDigits;
 			using VariableSpeedCoils::SimVariableSpeedCoils;
+			using VariableSpeedCoils::VarSpeedCoil;
 
 			// Locals
 			// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -198,21 +199,26 @@ namespace EnergyPlus {
 				SimVariableSpeedCoils(BlankString, IntegratedHeatPumpUnits(DXCoilNum).DWHCoilIndex,
 					CyclingScheme, MaxONOFFCyclesperHour, HPTimeConstant, FanDelayTime, CompOp, PartLoadFrac,
 					SpeedNum, SpeedRatio, SensLoad, LatentLoad, OnOffAirFlowRat);
+				IntegratedHeatPumpUnits(DXCoilNum).TotalHeatingEnergyRate = VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).DWHCoilIndex).TotalHeatingEnergyRate; 
 				break; 
 			case SCWHMatchSCMode:
 				SimVariableSpeedCoils(BlankString, IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilIndex,
 					CyclingScheme, MaxONOFFCyclesperHour, HPTimeConstant, FanDelayTime, CompOp, PartLoadFrac,
 					SpeedNum, SpeedRatio, SensLoad, LatentLoad, OnOffAirFlowRat);
+				IntegratedHeatPumpUnits(DXCoilNum).TotalHeatingEnergyRate = VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilIndex).TotalHeatingEnergyRate;
 				break; 
 			case SCWHMatchWHMode:
 				SimVariableSpeedCoils(BlankString, IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilIndex,
 					CyclingScheme, MaxONOFFCyclesperHour, HPTimeConstant, FanDelayTime, CompOp, PartLoadFrac,
 					SpeedNum, SpeedRatio, SensLoad, LatentLoad, OnOffAirFlowRat);
+				IntegratedHeatPumpUnits(DXCoilNum).TotalHeatingEnergyRate = VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilIndex).TotalHeatingEnergyRate;
 				break; 
 			case SCDWHMode:
 				SimVariableSpeedCoils(BlankString, IntegratedHeatPumpUnits(DXCoilNum).SCDWHWHCoilIndex,
 					CyclingScheme, MaxONOFFCyclesperHour, HPTimeConstant, FanDelayTime, CompOp, PartLoadFrac,
 					SpeedNum, SpeedRatio, SensLoad, LatentLoad, OnOffAirFlowRat);
+				IntegratedHeatPumpUnits(DXCoilNum).TotalHeatingEnergyRate = VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCDWHWHCoilIndex).TotalHeatingEnergyRate;
+
 				SimVariableSpeedCoils(BlankString, IntegratedHeatPumpUnits(DXCoilNum).SCDWHCoolCoilIndex,
 					CyclingScheme, MaxONOFFCyclesperHour, HPTimeConstant, FanDelayTime, CompOp, PartLoadFrac,
 					SpeedNum, SpeedRatio, SensLoad, LatentLoad, OnOffAirFlowRat);
@@ -221,6 +227,8 @@ namespace EnergyPlus {
 				SimVariableSpeedCoils(BlankString, IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilIndex,
 					CyclingScheme, MaxONOFFCyclesperHour, HPTimeConstant, FanDelayTime, CompOp, PartLoadFrac,
 					SpeedNum, SpeedRatio, SensLoad, LatentLoad, OnOffAirFlowRat);
+				IntegratedHeatPumpUnits(DXCoilNum).TotalHeatingEnergyRate = VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilIndex).TotalHeatingEnergyRate;
+
 				SimVariableSpeedCoils(BlankString, IntegratedHeatPumpUnits(DXCoilNum).SHDWHHeatCoilIndex,
 					CyclingScheme, MaxONOFFCyclesperHour, HPTimeConstant, FanDelayTime, CompOp, PartLoadFrac,
 					SpeedNum, SpeedRatio, SensLoad, LatentLoad, OnOffAirFlowRat);
@@ -229,6 +237,8 @@ namespace EnergyPlus {
 				SimVariableSpeedCoils(BlankString, IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilIndex,
 					CyclingScheme, MaxONOFFCyclesperHour, HPTimeConstant, FanDelayTime, CompOp, PartLoadFrac,
 					SpeedNum, SpeedRatio, SensLoad, LatentLoad, OnOffAirFlowRat);
+				IntegratedHeatPumpUnits(DXCoilNum).TotalHeatingEnergyRate = VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilIndex).TotalHeatingEnergyRate;
+
 				SimVariableSpeedCoils(BlankString, IntegratedHeatPumpUnits(DXCoilNum).SHDWHHeatCoilIndex,
 					CyclingScheme, MaxONOFFCyclesperHour, HPTimeConstant, FanDelayTime, CompOp, PartLoadFrac,
 					SpeedNum, SpeedRatio, SensLoad, LatentLoad, OnOffAirFlowRat);
@@ -621,14 +631,89 @@ namespace EnergyPlus {
 			)
 		{
 
-		
+			IntegratedHeatPumpUnits(DXCoilNum).TotalHeatingEnergyRate = 0.0;
+					
 		}
 
 		void
 			SizeIHP(int const DXCoilNum)
 		{
+			using VariableSpeedCoils::SimVariableSpeedCoils;
+			using VariableSpeedCoils::SetVarSpeedCoilData;
+			using VariableSpeedCoils::SizeVarSpeedCoil; 
+			using VariableSpeedCoils::VarSpeedCoil;
+			using DataSizing::AutoSize; 
 
+			static bool ErrorsFound(false); // If errors detected in input
+			Real64 RatedCapacity(0.0); //rated building cooling load
+			
+			// Obtains and Allocates WatertoAirHP related parameters from input file
+			if (GetCoilsInputFlag) { //First time subroutine has been entered
+				GetIHPInput();
+				//    WaterIndex=FindGlycol('WATER') !Initialize the WaterIndex once
+				GetCoilsInputFlag = false;
+			};
+
+			SetVarSpeedCoilData(IntegratedHeatPumpUnits(DXCoilNum).SCCoilIndex, ErrorsFound, _, IntegratedHeatPumpUnits(DXCoilNum).SHCoilIndex);
+			if (ErrorsFound) {
+				ShowSevereError("SizeIHP: Could not match cooling coil\"" + IntegratedHeatPumpUnits(DXCoilNum).SCCoilName + 
+					"\" with heating coil=\"" + IntegratedHeatPumpUnits(DXCoilNum).SHCoilName + "\"");
+			};
 		
+			SizeVarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCCoilIndex);//size cooling coil
+			if (ErrorsFound) {
+				ShowSevereError("SizeIHP: failed to size SC coil\"" + IntegratedHeatPumpUnits(DXCoilNum).SCCoilName + "\"");
+			}
+			else
+			{
+				RatedCapacity = VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCCoilIndex).RatedCapCoolTotal; 
+			};
+
+			SizeVarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SHCoilIndex);//size cooling coil
+			if (ErrorsFound) {
+				ShowSevereError("SizeIHP: failed to size SH coil\"" + IntegratedHeatPumpUnits(DXCoilNum).SHCoilName + "\"");
+			};
+
+			if (VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCDWHCoolCoilIndex).RatedCapCoolTotal == AutoSize)
+			{
+				VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCDWHCoolCoilIndex).RatedCapCoolTotal = RatedCapacity;
+			};
+
+			SetVarSpeedCoilData(IntegratedHeatPumpUnits(DXCoilNum).SCDWHCoolCoilIndex, ErrorsFound, _, IntegratedHeatPumpUnits(DXCoilNum).SHDWHHeatCoilIndex);
+			SizeVarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCDWHCoolCoilIndex);
+			SizeVarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SHDWHHeatCoilIndex);
+
+			if (VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilIndex).RatedCapWH == AutoSize)
+			{
+				VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilIndex).RatedCapWH = 
+					RatedCapacity / (1.0 - 1.0 / VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilIndex).RatedCOPHeat);
+			}
+
+			SizeVarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilIndex);
+
+			if (VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).DWHCoilIndex).RatedCapWH == AutoSize)
+			{
+				VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).DWHCoilIndex).RatedCapWH =
+					RatedCapacity / (1.0 - 1.0 / VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).DWHCoilIndex).RatedCOPHeat);
+			}
+
+			SizeVarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).DWHCoilIndex);
+
+			if (VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCDWHWHCoilIndex).RatedCapWH == AutoSize)
+			{
+				VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCDWHWHCoilIndex).RatedCapWH =
+					RatedCapacity / (1.0 - 1.0 / VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCDWHWHCoilIndex).RatedCOPHeat);
+			}
+
+			SizeVarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SCDWHWHCoilIndex);
+
+			if (VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilIndex).RatedCapWH == AutoSize)
+			{
+				VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilIndex).RatedCapWH =
+					RatedCapacity / (1.0 - 1.0 / VarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilIndex).RatedCOPHeat);
+			}
+
+			SizeVarSpeedCoil(IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilIndex);
 
 		}
 

@@ -148,8 +148,13 @@ namespace IntegratedHeatPumps {
 		Real64 SHDWHRunTime; 
 		bool NodeConnected; 
 		Real64 TotalHeatingEnergyRate; 
-		Real64 MaxFanCoolVolFlowRate;// max fan cooling volumetric flow rate
-		Real64 MaxFanHeatVolFlowRate;// max fan heating volumetric flow rate
+		Real64 CoolVolFlowScale;// max fan cooling volumetric flow rate
+		Real64 HeatVolFlowScale;// max fan heating volumetric flow rate
+		Real64 MaxHeatAirMassFlow;//maximum air mass flow rate for heating mode
+		Real64 MaxHeatAirVolFlow;//maximum air volume flow rate for heating mode
+		Real64 MaxCoolAirMassFlow;//maximum air mass flow rate for heating mode
+		Real64 MaxCoolAirVolFlow;//maximum air volume flow rate for heating mode
+		bool IHPCoilsSized;//whether IHP coils have been sized
 
 		
 		// Default Constructor
@@ -342,26 +347,13 @@ namespace IntegratedHeatPumps {
 	void
 	GetIHPInput();
 
-	// Beginning Initialization Section of the Module
-	//******************************************************************************
-
-	void
-	InitIHP(
-		int const CoilNum, // Current DXCoilNum under simulation
-		Real64 const MaxONOFFCyclesperHour, // Maximum cycling rate of heat pump [cycles/hr]
-		Real64 const HPTimeConstant, // Heat pump time constant [s]
-		Real64 const FanDelayTime, // Fan delay time, time delay for the HP's fan to
-		Real64 const SensLoad, // Control zone sensible load[W]
-		Real64 const LatentLoad, // Control zone latent load[W]
-		int const CyclingScheme, // fan operating mode
-		Real64 const OnOffAirFlowRatio, // ratio of compressor on flow to average flow over time step
-		Real64 const SpeedRatio, // compressor speed ratio
-		int const SpeedNum // compressor speed number
-	);
 
 	void
 	SizeIHP( int const CoilNum );
 	
+	void
+	InitializeIHP( int const DXCoilNum); 
+
 	void
 	UpdateIHP( int const DXCoilNum );
 
@@ -380,13 +372,19 @@ namespace IntegratedHeatPumps {
 		GetMaxSpeedNumIHP(int const DXCoilNum);
 
 	Real64
-		GetAirVolFlowRateIHP(int const DXCoilNum, int const SpeedNum, Real64 const SpeedRatio);
+		GetAirVolFlowRateIHP(int const DXCoilNum, int const SpeedNum, Real64 const SpeedRatio, 
+		bool const IsCallbyWH //whether the call from the water heating loop or air loop, true = from water heating loop
+		);
 
 	Real64
-		GetWaterVolFlowRateIHP(int const DXCoilNum, int const SpeedNum, Real64 const SpeedRatio);
+		GetWaterVolFlowRateIHP(int const DXCoilNum, int const SpeedNum, Real64 const SpeedRatio,
+		bool const IsCallbyWH //whether the call from the water heating loop or air loop, true = from water heating loop
+		);
 
 	Real64
-		GetAirMassFlowRateIHP(int const DXCoilNum, int const SpeedNum, Real64 const SpeedRatio);
+		GetAirMassFlowRateIHP(int const DXCoilNum, int const SpeedNum, Real64 const SpeedRatio,
+		bool const IsCallbyWH //whether the call from the water heating loop or air loop, true = from water heating loop
+		);
 
 	int
 		GetCoilIndexIHP(
@@ -403,7 +401,7 @@ namespace IntegratedHeatPumps {
 		);
 
 	Real64
-		GetCoilCapacityIHP(
+		GetDWHCoilCapacityIHP(
 		std::string const & CoilType, // must match coil types in this module
 		std::string const & CoilName, // must match coil names for the coil type
 		int const Mode,//mode coil type
@@ -411,7 +409,7 @@ namespace IntegratedHeatPumps {
 		);
 
 	int
-		GetIHPCoilPLFFPLR(
+		GetIHPDWHCoilPLFFPLR(
 		std::string const & CoilType, // must match coil types in this module
 		std::string const & CoilName, // must match coil names for the coil type
 		int const Mode,//mode coil type

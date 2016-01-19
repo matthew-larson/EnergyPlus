@@ -249,6 +249,7 @@ namespace Furnaces {
 		// REFERENCES:
 		// na
 
+
 		// Using/Aliasing
 		using InputProcessor::FindItemInList;
 		using HeatingCoils::SimulateHeatingCoilComponents;
@@ -839,10 +840,8 @@ namespace Furnaces {
 		}
 		CheckEquipName.dimension( NumFurnaces, true );
 
-		for (IHPCoilIndex = 1; IHPCoilIndex <= NumFurnaces; ++IHPCoilIndex)//clear IHP flag
-		{
+		for (IHPCoilIndex = 1; IHPCoilIndex <= NumFurnaces; ++IHPCoilIndex)//clear IHP flag		
 			Furnace(IHPCoilIndex).bIsIHP = false;
-		};
 		IHPCoilIndex = 0; 
 
 
@@ -4871,8 +4870,6 @@ namespace Furnaces {
 				if (true == Furnace(FurnaceNum).bIsIHP)//set max fan flow rate to the IHP collection
 				{
 					IHPIndex = Furnace(FurnaceNum).CoolingCoilIndex; 
-					IntegratedHeatPumpUnits(IHPIndex).MaxFanCoolVolFlowRate = Furnace(FurnaceNum).FanVolFlow; 
-					IntegratedHeatPumpUnits(IHPIndex).MaxFanHeatVolFlowRate = Furnace(FurnaceNum).FanVolFlow;
 				}; 
 
 				if ( Furnace( FurnaceNum ).FanVolFlow != AutoSize ) {
@@ -4882,6 +4879,13 @@ namespace Furnaces {
 						ShowContinueError( " The MSHP system flow rate when cooling is required is reset to the fan flow rate and the simulation continues." );
 						ShowContinueError( " Occurs in " + CurrentModuleObject + " = " + Furnace( FurnaceNum ).Name );
 						Furnace( FurnaceNum ).CoolVolumeFlowRate( NumOfSpeedCooling ) = Furnace( FurnaceNum ).FanVolFlow;
+
+						if (true == Furnace(FurnaceNum).bIsIHP)//set max fan flow rate to the IHP collection
+						{
+							IntegratedHeatPumpUnits(Furnace(FurnaceNum).CoolingCoilIndex).MaxCoolAirVolFlow = Furnace(FurnaceNum).FanVolFlow;
+							IntegratedHeatPumpUnits(Furnace(FurnaceNum).CoolingCoilIndex).MaxCoolAirMassFlow = Furnace(FurnaceNum).FanVolFlow * StdRhoAir;
+						};
+
 						// Check flow rates in other speeds and ensure flow rates are not above the max flow rate
 						for ( i = NumOfSpeedCooling - 1; i >= 1; --i ) {
 							if ( Furnace( FurnaceNum ).CoolVolumeFlowRate( i ) > Furnace( FurnaceNum ).CoolVolumeFlowRate( i + 1 ) ) {
@@ -4897,6 +4901,13 @@ namespace Furnaces {
 							ShowContinueError( " The MSHP system flow rate when heating is required is reset to the fan flow rate and the simulation continues." );
 							ShowContinueError( " Occurs in " + CurrentModuleObject + " = " + Furnace( FurnaceNum ).Name );
 							Furnace( FurnaceNum ).HeatVolumeFlowRate( NumOfSpeedHeating ) = Furnace( FurnaceNum ).FanVolFlow;
+
+							if (true == Furnace(FurnaceNum).bIsIHP)//set max fan flow rate to the IHP collection
+							{
+								IntegratedHeatPumpUnits(Furnace(FurnaceNum).CoolingCoilIndex).MaxHeatAirVolFlow = Furnace(FurnaceNum).FanVolFlow;
+								IntegratedHeatPumpUnits(Furnace(FurnaceNum).CoolingCoilIndex).MaxHeatAirMassFlow = Furnace(FurnaceNum).FanVolFlow * StdRhoAir;
+							};
+
 							for ( i = NumOfSpeedHeating - 1; i >= 1; --i ) {
 								if ( Furnace( FurnaceNum ).HeatVolumeFlowRate( i ) > Furnace( FurnaceNum ).HeatVolumeFlowRate( i + 1 ) ) {
 									ShowContinueError( " The MSHP system flow rate when heating is required is reset to the flow rate at higher speed and the simulation continues at Speed" + TrimSigDigits( i ) + '.' );
@@ -5362,6 +5373,7 @@ namespace Furnaces {
 				IHPCoilIndex = IntegratedHeatPumpUnits(Furnace(FurnaceNum).CoolingCoilIndex).SCCoilIndex;
 				Furnace(FurnaceNum).NumOfSpeedCooling = VarSpeedCoil(IHPCoilIndex).NumOfSpeeds;
 				MulSpeedFlowScale = VarSpeedCoil(IHPCoilIndex).RatedAirVolFlowRate / VarSpeedCoil(IHPCoilIndex).MSRatedAirVolFlowRate(VarSpeedCoil(IHPCoilIndex).NormSpedLevel);
+				IntegratedHeatPumpUnits(Furnace(FurnaceNum).CoolingCoilIndex).CoolVolFlowScale = MulSpeedFlowScale; 
 			}
 			else
 			{
@@ -5386,6 +5398,7 @@ namespace Furnaces {
 					IHPCoilIndex = IntegratedHeatPumpUnits(Furnace(FurnaceNum).CoolingCoilIndex).SHCoilIndex;
 					Furnace(FurnaceNum).NumOfSpeedHeating = VarSpeedCoil(IHPCoilIndex).NumOfSpeeds;
 					MulSpeedFlowScale = VarSpeedCoil(IHPCoilIndex).RatedAirVolFlowRate / VarSpeedCoil(IHPCoilIndex).MSRatedAirVolFlowRate(VarSpeedCoil(IHPCoilIndex).NormSpedLevel);
+					IntegratedHeatPumpUnits(Furnace(FurnaceNum).CoolingCoilIndex).HeatVolFlowScale = MulSpeedFlowScale;
 				}
 				else
 				{
@@ -9562,19 +9575,19 @@ namespace Furnaces {
 		else if (true == Furnace(FurnaceNum).bIsIHP)
 		{
 			if(present(SpeedNum)) {
-				CompOnMassFlow = GetAirMassFlowRateIHP(Furnace(FurnaceNum).CoolingCoilIndex, SpeedNum, SpeedRatio); 
+				CompOnMassFlow = GetAirMassFlowRateIHP(Furnace(FurnaceNum).CoolingCoilIndex, SpeedNum, SpeedRatio, false); 
 				CompOnFlowRatio = CompOnMassFlow / 
-					GetAirMassFlowRateIHP(Furnace(FurnaceNum).CoolingCoilIndex, GetMaxSpeedNumIHP(Furnace(FurnaceNum).CoolingCoilIndex), 1.0);
-				MSHPMassFlowRateLow = GetAirMassFlowRateIHP(Furnace(FurnaceNum).CoolingCoilIndex, SpeedNum, 0.0);
-				MSHPMassFlowRateHigh = GetAirMassFlowRateIHP(Furnace(FurnaceNum).CoolingCoilIndex, SpeedNum, 1.0);
+					GetAirMassFlowRateIHP(Furnace(FurnaceNum).CoolingCoilIndex, GetMaxSpeedNumIHP(Furnace(FurnaceNum).CoolingCoilIndex), 1.0, false);
+				MSHPMassFlowRateLow = GetAirMassFlowRateIHP(Furnace(FurnaceNum).CoolingCoilIndex, SpeedNum, 0.0, false);
+				MSHPMassFlowRateHigh = GetAirMassFlowRateIHP(Furnace(FurnaceNum).CoolingCoilIndex, SpeedNum, 1.0, false);
 			}
 
 			// Set up fan flow rate during compressor off time
 			if (Furnace(FurnaceNum).OpMode == ContFanCycCoil && present(SpeedNum)) {
 				if (Furnace(FurnaceNum).AirFlowControl == UseCompressorOnFlow && CompOnMassFlow > 0.0) {
-					CompOffMassFlow = GetAirMassFlowRateIHP(Furnace(FurnaceNum).CoolingCoilIndex, SpeedNum, 1.0);
+					CompOffMassFlow = GetAirMassFlowRateIHP(Furnace(FurnaceNum).CoolingCoilIndex, SpeedNum, 1.0, false);
 					CompOffFlowRatio = CompOffMassFlow / 
-						GetAirMassFlowRateIHP(Furnace(FurnaceNum).CoolingCoilIndex, GetMaxSpeedNumIHP(Furnace(FurnaceNum).CoolingCoilIndex), 1.0);
+						GetAirMassFlowRateIHP(Furnace(FurnaceNum).CoolingCoilIndex, GetMaxSpeedNumIHP(Furnace(FurnaceNum).CoolingCoilIndex), 1.0, false);
 				}
 			}
 

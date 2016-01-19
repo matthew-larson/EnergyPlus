@@ -3946,6 +3946,7 @@ namespace VariableSpeedCoils {
 		Real64 RhoWater; // condensed water density
 		Real64 SpecHumIn; // inlet air specific humidity
 		Real64 SpecHumOut; // outlet air specific humidity
+		Real64 rhoair(0);//entering air density
 
 		if ( firstTime ) {
 			//Set indoor air conditions to the rated condition
@@ -4349,6 +4350,8 @@ namespace VariableSpeedCoils {
 		VarSpeedCoil( DXCoilNum ).RunFrac = RuntimeFrac;
 		VarSpeedCoil( DXCoilNum ).PartLoadRatio = PartLoadRatio;
 		VarSpeedCoil( DXCoilNum ).AirMassFlowRate = PLRCorrLoadSideMdot;
+		rhoair = PsyRhoAirFnPbTdbW(OutBaroPress, LoadSideInletDBTemp, LoadSideInletHumRat, RoutineName);
+		VarSpeedCoil(DXCoilNum).AirVolFlowRate = VarSpeedCoil(DXCoilNum).AirMassFlowRate / rhoair; 
 
 		if ( VarSpeedCoil( DXCoilNum ).VSCoilTypeOfNum == Coil_CoolingAirToAirVariableSpeed ) {
 			VarSpeedCoil( DXCoilNum ).WaterMassFlowRate = 0.0;
@@ -4477,6 +4480,8 @@ namespace VariableSpeedCoils {
 		int CondOutletNode; // Condenser water outlet node number
 		int MaxSpeed; // maximum speed level
 		int SpeedCal; // calculated speed level
+		Real64 rhoair(0.0);//entering air density
+		Real64 RhoWater(0.0);//water density
 
 		//note: load side is the evaporator side, and source side is the condenser side
 
@@ -4903,8 +4908,12 @@ namespace VariableSpeedCoils {
 		VarSpeedCoil(DXCoilNum).RunFrac = RuntimeFrac;
 		VarSpeedCoil(DXCoilNum).PartLoadRatio = PartLoadRatio;
 		VarSpeedCoil(DXCoilNum).AirMassFlowRate = PLRCorrLoadSideMdot;
-
+		rhoair = PsyRhoAirFnPbTdbW(OutBaroPress, LoadSideInletDBTemp, LoadSideInletHumRat, RoutineName);
+		VarSpeedCoil(DXCoilNum).AirVolFlowRate = VarSpeedCoil(DXCoilNum).AirMassFlowRate / rhoair;
 		VarSpeedCoil(DXCoilNum).WaterMassFlowRate = SourceSideMassFlowRate;
+		RhoWater = RhoH2O(InletWaterTemp); // initialize
+		VarSpeedCoil(DXCoilNum).WaterVolFlowRate = VarSpeedCoil(DXCoilNum).WaterMassFlowRate / RhoWater;
+
 		VarSpeedCoil(DXCoilNum).OutletWaterTemp = SourceSideInletTemp + QSource / (SourceSideMassFlowRate * CpWater);
 		VarSpeedCoil(DXCoilNum).OutletWaterEnthalpy = SourceSideInletEnth + QSource / SourceSideMassFlowRate;
 		VarSpeedCoil(DXCoilNum).QWasteHeat = 0.0;
@@ -4991,6 +5000,7 @@ namespace VariableSpeedCoils {
 		Real64 QWasteHeat2; // recoverable waste heat at high speed
 		Real64 PLF; // part-load function
 		Real64 ReportingConstant;
+		Real64 rhoair(0.0);//entering air density
 
 		// ADDED VARIABLES FOR air source coil
 		static Real64 OutdoorCoilT( 0.0 ); // Outdoor coil temperature (C)
@@ -5330,6 +5340,8 @@ namespace VariableSpeedCoils {
 		VarSpeedCoil( DXCoilNum ).RunFrac = RuntimeFrac;
 		VarSpeedCoil( DXCoilNum ).PartLoadRatio = PartLoadRatio;
 		VarSpeedCoil( DXCoilNum ).AirMassFlowRate = PLRCorrLoadSideMdot;
+		rhoair = PsyRhoAirFnPbTdbW(OutBaroPress, LoadSideInletDBTemp, LoadSideInletHumRat, RoutineName);
+		VarSpeedCoil(DXCoilNum).AirVolFlowRate = VarSpeedCoil(DXCoilNum).AirMassFlowRate / rhoair;
 
 		if ( VarSpeedCoil( DXCoilNum ).VSCoilTypeOfNum == Coil_HeatingAirToAirVariableSpeed ) {
 			VarSpeedCoil( DXCoilNum ).WaterMassFlowRate = 0.0;

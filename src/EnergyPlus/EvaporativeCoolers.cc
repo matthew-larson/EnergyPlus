@@ -83,6 +83,7 @@
 #include <DataZoneEnergyDemands.hh>
 #include <EMSManager.hh>
 #include <Fans.hh>
+#include <HVACFan.hh>
 #include <General.hh>
 #include <GeneralRoutines.hh>
 #include <InputProcessor.hh>
@@ -3818,7 +3819,11 @@ namespace EvaporativeCoolers {
 				}
 				MyFanFlag( UnitNum ) = false;
 			} else {
-				GetFanVolFlow( ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).ActualFanVolFlowRate );
+				if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+					GetFanVolFlow( ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).ActualFanVolFlowRate );
+				} else {
+					ZoneEvapUnit( UnitNum ).ActualFanVolFlowRate = HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->getFanDesignVolumeFlowRate();
+				}
 			}
 		}
 
@@ -4128,7 +4133,11 @@ namespace EvaporativeCoolers {
 				if ( ZoneEvapUnit( UnitNum ).FanLocation == BlowThruFan ) {
 					Node( ZoneEvapUnit( UnitNum ).FanOutletNodeNum ).MassFlowRate = Node( ZoneEvapUnit( UnitNum ).OAInletNodeNum ).MassFlowRate;
 					Node( ZoneEvapUnit( UnitNum ).FanOutletNodeNum ).MassFlowRateMaxAvail = Node( ZoneEvapUnit( UnitNum ).OAInletNodeNum ).MassFlowRate;
-					SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+						SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					} else {
+						HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+					}
 				}
 
 				if ( ZoneEvapUnit( UnitNum ).EvapCooler_1_AvailStatus ) {
@@ -4139,7 +4148,11 @@ namespace EvaporativeCoolers {
 					SimEvapCooler( ZoneEvapUnit( UnitNum ).EvapCooler_2_Name, ZoneEvapUnit( UnitNum ).EvapCooler_2_Index );
 				}
 				if ( ZoneEvapUnit( UnitNum ).FanLocation == DrawThruFan ) {
-					SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+						SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					} else {
+						HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+					}
 				}
 			} else { // not running
 				Node( ZoneEvapUnit( UnitNum ).OAInletNodeNum ).MassFlowRate = 0.0;
@@ -4168,7 +4181,11 @@ namespace EvaporativeCoolers {
 					Node( ZoneEvapUnit( UnitNum ).UnitReliefNodeNum ).MassFlowRateMaxAvail = 0.0;
 				}
 				if ( ZoneEvapUnit( UnitNum ).FanLocation == BlowThruFan ) {
-					SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+						SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					} else {
+						HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+					}
 				}
 
 				if ( ZoneEvapUnit( UnitNum ).EvapCooler_1_AvailStatus ) {
@@ -4179,7 +4196,11 @@ namespace EvaporativeCoolers {
 					SimEvapCooler( ZoneEvapUnit( UnitNum ).EvapCooler_2_Name, ZoneEvapUnit( UnitNum ).EvapCooler_2_Index );
 				}
 				if ( ZoneEvapUnit( UnitNum ).FanLocation == DrawThruFan ) {
-					SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+						SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					} else {
+						HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+					}
 				}
 			}
 
@@ -4203,7 +4224,11 @@ namespace EvaporativeCoolers {
 				if ( ZoneEvapUnit( UnitNum ).FanLocation == BlowThruFan ) {
 					Node( ZoneEvapUnit( UnitNum ).FanOutletNodeNum ).MassFlowRate = Node( ZoneEvapUnit( UnitNum ).OAInletNodeNum ).MassFlowRate;
 					Node( ZoneEvapUnit( UnitNum ).FanOutletNodeNum ).MassFlowRateMaxAvail = Node( ZoneEvapUnit( UnitNum ).OAInletNodeNum ).MassFlowRate;
-					SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+						SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					} else {
+						HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+					}
 				}
 
 				if ( ZoneEvapUnit( UnitNum ).EvapCooler_1_AvailStatus ) {
@@ -4214,7 +4239,11 @@ namespace EvaporativeCoolers {
 					SimEvapCooler( ZoneEvapUnit( UnitNum ).EvapCooler_2_Name, ZoneEvapUnit( UnitNum ).EvapCooler_2_Index );
 				}
 				if ( ZoneEvapUnit( UnitNum ).FanLocation == DrawThruFan ) {
-					SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+						SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					} else {
+						HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+					}
 				}
 			} else {
 				Node( ZoneEvapUnit( UnitNum ).OAInletNodeNum ).MassFlowRate = 0.0;
@@ -4243,7 +4272,11 @@ namespace EvaporativeCoolers {
 					Node( ZoneEvapUnit( UnitNum ).UnitReliefNodeNum ).MassFlowRateMaxAvail = 0.0;
 				}
 				if ( ZoneEvapUnit( UnitNum ).FanLocation == BlowThruFan ) {
-					SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+						SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					} else {
+						HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+					}
 				}
 
 				if ( ZoneEvapUnit( UnitNum ).EvapCooler_1_AvailStatus ) {
@@ -4254,7 +4287,11 @@ namespace EvaporativeCoolers {
 					SimEvapCooler( ZoneEvapUnit( UnitNum ).EvapCooler_2_Name, ZoneEvapUnit( UnitNum ).EvapCooler_2_Index );
 				}
 				if ( ZoneEvapUnit( UnitNum ).FanLocation == DrawThruFan ) {
-					SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+						SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					} else {
+						HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( ZoneEvapUnit( UnitNum ).DesignFanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+					}
 				}
 			}
 
@@ -4279,7 +4316,11 @@ namespace EvaporativeCoolers {
 				if ( ZoneEvapUnit( UnitNum ).FanLocation == BlowThruFan ) {
 					Node( ZoneEvapUnit( UnitNum ).FanOutletNodeNum ).MassFlowRate = Node( ZoneEvapUnit( UnitNum ).OAInletNodeNum ).MassFlowRate;
 					Node( ZoneEvapUnit( UnitNum ).FanOutletNodeNum ).MassFlowRateMaxAvail = Node( ZoneEvapUnit( UnitNum ).OAInletNodeNum ).MassFlowRate;
-					SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+						SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					} else {
+						HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+					}
 				}
 
 				if ( ZoneEvapUnit( UnitNum ).EvapCooler_1_AvailStatus ) {
@@ -4290,7 +4331,11 @@ namespace EvaporativeCoolers {
 					SimEvapCooler( ZoneEvapUnit( UnitNum ).EvapCooler_2_Name, ZoneEvapUnit( UnitNum ).EvapCooler_2_Index );
 				}
 				if ( ZoneEvapUnit( UnitNum ).FanLocation == DrawThruFan ) {
-					SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+						SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					} else {
+						HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+					}
 				}
 			} else {
 				Node( ZoneEvapUnit( UnitNum ).OAInletNodeNum ).MassFlowRate = 0.0;
@@ -4319,7 +4364,11 @@ namespace EvaporativeCoolers {
 					Node( ZoneEvapUnit( UnitNum ).UnitReliefNodeNum ).MassFlowRateMaxAvail = 0.0;
 				}
 				if ( ZoneEvapUnit( UnitNum ).FanLocation == BlowThruFan ) {
-					SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+						SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					} else {
+						HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+					}
 				}
 
 				if ( ZoneEvapUnit( UnitNum ).EvapCooler_1_AvailStatus ) {
@@ -4330,7 +4379,11 @@ namespace EvaporativeCoolers {
 					SimEvapCooler( ZoneEvapUnit( UnitNum ).EvapCooler_2_Name, ZoneEvapUnit( UnitNum ).EvapCooler_2_Index );
 				}
 				if ( ZoneEvapUnit( UnitNum ).FanLocation == DrawThruFan ) {
-					SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+						SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+					} else {
+						HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+					}
 				}
 			}
 		}}
@@ -4408,7 +4461,11 @@ namespace EvaporativeCoolers {
 		if ( ZoneEvapUnit( UnitNum ).FanLocation == BlowThruFan ) {
 			Node( ZoneEvapUnit( UnitNum ).FanOutletNodeNum ).MassFlowRate = Node( ZoneEvapUnit( UnitNum ).OAInletNodeNum ).MassFlowRate;
 			Node( ZoneEvapUnit( UnitNum ).FanOutletNodeNum ).MassFlowRateMaxAvail = Node( ZoneEvapUnit( UnitNum ).OAInletNodeNum ).MassFlowRate;
-			SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+			if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+				SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+			} else {
+				HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+			}
 		}
 
 		if ( ZoneEvapUnit( UnitNum ).EvapCooler_1_AvailStatus ) {
@@ -4419,7 +4476,11 @@ namespace EvaporativeCoolers {
 			SimEvapCooler( ZoneEvapUnit( UnitNum ).EvapCooler_2_Name, ZoneEvapUnit( UnitNum ).EvapCooler_2_Index );
 		}
 		if ( ZoneEvapUnit( UnitNum ).FanLocation == DrawThruFan ) {
-			SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+			if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+				SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+			} else {
+				HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( ZoneEvapUnit( UnitNum ).FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+			}
 		}
 
 		// calculate sensible load met using delta enthalpy at a constant (minimum) humidity ratio)
@@ -4526,7 +4587,11 @@ namespace EvaporativeCoolers {
 		if ( ZoneEvapUnit( UnitNum ).FanLocation == BlowThruFan ) {
 			Node( ZoneEvapUnit( UnitNum ).FanOutletNodeNum ).MassFlowRate = Node( ZoneEvapUnit( UnitNum ).OAInletNodeNum ).MassFlowRate;
 			Node( ZoneEvapUnit( UnitNum ).FanOutletNodeNum ).MassFlowRateMaxAvail = Node( ZoneEvapUnit( UnitNum ).OAInletNodeNum ).MassFlowRate;
-			SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+			if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+				SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+			} else {
+				HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+			}
 		}
 
 		if ( ZoneEvapUnit( UnitNum ).EvapCooler_1_AvailStatus ) {
@@ -4537,7 +4602,11 @@ namespace EvaporativeCoolers {
 			SimEvapCooler( ZoneEvapUnit( UnitNum ).EvapCooler_2_Name, ZoneEvapUnit( UnitNum ).EvapCooler_2_Index );
 		}
 		if ( ZoneEvapUnit( UnitNum ).FanLocation == DrawThruFan ) {
-			SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+			if ( ZoneEvapUnit( UnitNum ).FanType_Num != DataHVACGlobals::FanType_SystemModelObject ) {
+				SimulateFanComponents( ZoneEvapUnit( UnitNum ).FanName, false, ZoneEvapUnit( UnitNum ).FanIndex, FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff );
+			} else {
+				HVACFan::fanObjs[ ZoneEvapUnit( UnitNum ).FanIndex ]->simulate( FanSpeedRatio, ZoneCompTurnFansOn, ZoneCompTurnFansOff,_ );
+			}
 		}
 
 		MinHumRat = min( Node( ZoneEvapUnit( UnitNum ).ZoneNodeNum ).HumRat, Node( ZoneEvapUnit( UnitNum ).UnitOutletNodeNum ).HumRat );

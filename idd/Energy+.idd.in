@@ -32521,10 +32521,12 @@ ZoneHVAC:FourPipeFanCoil,
         \key Fan:OnOff
         \key Fan:ConstantVolume
         \key Fan:VariableVolume
+        \key Fan:SystemModel
         \note Fan type must be according to capacity control method (see I/O)
         \note For ConstantFanVariableFlow a Fan:OnOff or Fan:ConstantVolume is valid.
         \note For CyclingFan, a Fan:OnOff is valid.
         \note For VariableFanVariableFlow or VariableFanConstantFlow a Fan:VariableVolume is valid.
+        \note Fan:SystemModel is valid for all capacity control methods
         \note The fan's inlet node should be the same as the outdoor air mixer's mixed air node.
    A10, \field Supply Air Fan Name
         \required-field
@@ -33514,8 +33516,8 @@ ZoneHVAC:UnitVentilator,
         \key Fan:OnOff
         \key Fan:ConstantVolume
         \key Fan:VariableVolume
-        \note Allowable fan types are Fan:ConstantVolume, Fan:OnOff and
-        \note Fan:VariableVolume
+        \key Fan:SystemModel
+        \note Allowable fan types are Fan:ConstantVolume, Fan:OnOff, Fan:VariableVolume, and Fan:SystemModel
    A12, \field Supply Air Fan Name
         \required-field
         \type object-list
@@ -33591,8 +33593,8 @@ ZoneHVAC:UnitHeater,
         \key Fan:OnOff
         \key Fan:ConstantVolume
         \key Fan:VariableVolume
-        \note Allowable fan types are Fan:ConstantVolume, Fan:OnOff and
-        \note Fan:VariableVolume
+        \key Fan:SystemModel
+        \note Allowable fan types are Fan:ConstantVolume, Fan:OnOff, Fan:VariableVolume and Fan:SystemModel
    A6 , \field Supply Air Fan Name
         \required-field
         \type object-list
@@ -33688,10 +33690,11 @@ ZoneHVAC:EvaporativeCoolerUnit,
    A7 , \field Supply Air Fan Object Type
         \required-field
         \type choice
+        \key Fan:SystemModel
+        \key Fan:ComponentModel        
         \key Fan:ConstantVolume
         \key Fan:OnOff
         \key Fan:VariableVolume
-        \key Fan:ComponentModel
    A8 , \field Supply Air Fan Name
         \required-field
         \type object-list
@@ -40577,8 +40580,8 @@ ZoneHVAC:EquipmentConnections,
 
 \group Fans
 !*****************AIR LOOP COMPONENTS*********************
-Fan,
-       \memo Versatile simple fan that can be used in variable air volume, constant volume, or on-off cycling applications.
+Fan:SystemModel,
+       \memo Versatile simple fan that can be used in variable air volume, constant volume, on-off cycling, two-speed or multi-speed applications.
        \memo Performance at different flow rates, or speed levels, is determined using separate performance curve or table
        \memo or prescribed power fractions at discrete speed levels for two-speed or multi-speed fans.
        \min-fields 14
@@ -40613,9 +40616,9 @@ Fan,
        \default Discrete
   N2 , \field Electric Power Minimum Flow Rate Fraction
        \type real
+       \default 0.2
        \minimum 0.0
        \maximum 1.0
-       \default 0.2
   N3 , \field Design Pressure Rise
        \type real
        \units Pa
@@ -40642,7 +40645,7 @@ Fan,
        \type choice
        \key PowerPerFlow
        \key PowerPerFlowPerPressure
-       \key TotalEfficiency
+       \key TotalEfficiencyAndPressure
        \default PowerPerFlowPerPressure
   N7 , \field Electric Power Per Unit Flow Rate
        \type real

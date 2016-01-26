@@ -11531,7 +11531,7 @@ Reference: Dixon, Erin Elizabeth, "Energy Model Development and Heating Energy I
 Group     Fans
 ------------
 
-As of version 8.5, a new simple "Fan" input object was added that can be substitued for Fan:ConstantVolume, Fan:OnOff, Fan:VariableVolume, and FanPerformance:NightVentilation.  Users are encouraged to migrate their models to use this new Fan in the air loop or zone equipment because the original fan objects will be deprecated and removed in the future. 
+As of version 8.5, a new simple "Fan:SystemModel" input object was added that can be substitued for Fan:ConstantVolume, Fan:OnOff, Fan:VariableVolume, and FanPerformance:NightVentilation.  Users are encouraged to migrate their models to use this new Fan in the air loop or zone equipment because the original fan objects will be deprecated and removed in the future. 
 
 The following fans may be defined either in the air loop or as a zone equipment component: Fan:ConstantVolume, Fan:OnOff, Fan:VariableVolume, Fan:ZoneExhaust, and FanPerformance:NightVentilation. The data that are common to these fan types include an identifying name, an availability schedule name, a total efficiency rating, a rated pressure rise, and inlet and outlet air node names. In the case of a variable volume fan, additional input includes parameters for modeling fan performance over a range of fan speeds. See the engineering documentation for the variable speed fan for a further description of what these coefficients represent. Commonly-used values for different variable volume systems are shown in the following table.
 
@@ -11572,7 +11572,7 @@ Table 29. Fan Coefficient Values
 </tr>
 </table>
 
-### Fan
+### Fan:SystemModel
 This object models fans of various types using a relatively simple engineering model. This fan can be used in variable air volume, constant volume, on-off cycling, two-speed, or multi-speed applications.  It was designed as a replacement for Fan:ConstantVolume, Fan:OnOff, Fan:VariableVolume, and FanPerformance:NightVentilation. The electric power consumed by the fan can be directly input or autosized using one of three optional methods.  For fans that can vary the volume flow rate the performance can be described using a separate performance curve or table object. Or for fans with discrete speed control the power fraction at each speed can be input directly with no need for a performance curve.  
 
 #### Field: Name

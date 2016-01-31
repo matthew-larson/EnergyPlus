@@ -5280,6 +5280,10 @@ namespace WaterThermalTanks {
 			}
 
 			if (HPWaterHeater(HPNum).NumofSpeed > 0) {
+
+				if (true == HPWaterHeater(HPNum).bIsIHP) VSCoilID = IntegratedHeatPumpUnits(HPWaterHeater(HPNum).DXCoilNum).SCDWHCoolCoilIndex;
+				else VSCoilID = HPWaterHeater(HPNum).DXCoilNum;
+
 				// scale air flow rates
 				MulSpeedFlowScale = VarSpeedCoil(VSCoilID).RatedAirVolFlowRate /
 					VarSpeedCoil(VSCoilID).MSRatedAirVolFlowRate(VarSpeedCoil(VSCoilID).NormSpedLevel);

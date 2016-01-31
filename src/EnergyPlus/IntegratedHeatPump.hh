@@ -61,12 +61,6 @@ namespace IntegratedHeatPumps {
 		std::string Name; // Name of the  Coil
 		std::string IHPtype; // type of coil
 
-		int AirInletNodeNum; // Node Number of the Air Inlet
-		int AirOutletNodeNum; // Node Number of the Air Outlet
-		int WaterInletNodeNum; // Node Number of the Water Onlet
-		int WaterOutletNodeNum; // Node Number of the Water Outlet
-		int WaterTankoutNod; // water node to monitor the supply water flow amount
-
 		std::string SCCoilType; // Numeric Equivalent for SC Coil Type
 		std::string SCCoilName;
 		int SCCoilIndex; // Index to SC coil
@@ -99,6 +93,12 @@ namespace IntegratedHeatPumps {
 		std::string SHDWHWHCoilName;
 		int SHDWHWHCoilIndex; // Index to SHDWH coil, water heating part
 
+		int AirInletNodeNum; // Node Number of the Air Inlet
+		int AirOutletNodeNum; // Node Number of the Air Outlet
+		int WaterInletNodeNum; // Node Number of the Water Onlet
+		int WaterOutletNodeNum; // Node Number of the Water Outlet
+		int WaterTankoutNod; // water node to monitor the supply water flow amount
+
 		int ModeMatchSCWH;//- 0: match cooling load, 1 : match water heating load in SCWH mode
 		int MinSpedSCWH; //-minimum speed level for SCWH mode
 		int MinSpedSCDWH; //- minimum speed level for SCDWH mode
@@ -111,32 +111,6 @@ namespace IntegratedHeatPumps {
 		Real64 WaterVolSCDWH;// limit of water volume before switching from SCDWH to SCWH
 		Real64 TimeLimitSHDWH; //time limit before turning from SHDWH to electric heating 
 
-		//flow rates of SC mode
-		Array1D< Real64 > SCVolumeFlowRate; // Supply air volume flow rate during cooling operation
-		Array1D< Real64 > SCMassFlowRate; // Supply air mass flow rate during cooling operation
-		Array1D< Real64 > SCSpeedRatio; // Fan speed ratio in cooling mode
-
-		//flow rates of SH mode
-		Array1D< Real64 > SHVolumeFlowRate; // Supply air volume flow rate during heating operation
-		Array1D< Real64 > SHMassFlowRate; // Supply air mass flow rate during heating operation
-		Array1D< Real64 > SHSpeedRatio; // Fan speed ratio in heating mode
-
-		//flow rates of SCWH mode
-		Array1D< Real64 > SCWHVolumeFlowRate; // Supply air volume flow rate during SCWH operation
-		Array1D< Real64 > SCWHMassFlowRate; // Supply air mass flow rate during SCWH operation
-		Array1D< Real64 > SCWHSpeedRatio; // Fan speed ratio in SCWH mode
-
-		//flow rates of SCDWH mode
-		Array1D< Real64 > SCDWHVolumeFlowRate; // Supply air volume flow rate during SCDWH operation
-		Array1D< Real64 > SCDWHMassFlowRate; // Supply air mass flow rate during SCDWH operation
-		Array1D< Real64 > SCDWHSpeedRatio; // Fan speed ratio in SCDWH mode
-
-		//flow rates of SHDWH mode
-		Array1D< Real64 > SHDWHVolumeFlowRate; // Supply air volume flow rate during SHDWH operation
-		Array1D< Real64 > SHDWHMassFlowRate; // Supply air mass flow rate during SHDWH operation
-		Array1D< Real64 > SHDWHSpeedRatio; // Fan speed ratio in SHDWH mode
-
-		//not initialized yet
 		int WHtankType;
 		std::string WHtankName; 
 		int WHtankID; 
@@ -155,11 +129,10 @@ namespace IntegratedHeatPumps {
 		Real64 MaxCoolAirMassFlow;//maximum air mass flow rate for heating mode
 		Real64 MaxCoolAirVolFlow;//maximum air volume flow rate for heating mode
 		bool IHPCoilsSized;//whether IHP coils have been sized
-
-		
+				
 		// Default Constructor
 		IntegratedHeatPumpData() :
-			SCCoilIndex(0), 
+			SCCoilIndex(0),
 			SHCoilIndex(0),
 			SCWHCoilIndex(0),
 			DWHCoilIndex(0),
@@ -180,23 +153,25 @@ namespace IntegratedHeatPumps {
 			TambientOverCoolAllow(0.0),
 			TindoorWHHighPriority(0.0),
 			TambientWHHighPriority(0.0),
-			SCVolumeFlowRate(MaxSpedLevels, 0.0),
-			SCMassFlowRate(MaxSpedLevels, 0.0),
-			SCSpeedRatio(MaxSpedLevels, 0.0),
-			SHVolumeFlowRate(MaxSpedLevels, 0.0),
-			SHMassFlowRate(MaxSpedLevels, 0.0),
-			SHSpeedRatio(MaxSpedLevels, 0.0),
-			SCWHVolumeFlowRate(MaxSpedLevels, 0.0),
-			SCWHMassFlowRate(MaxSpedLevels, 0.0),
-			SCWHSpeedRatio(MaxSpedLevels, 0.0),
-			SCDWHVolumeFlowRate(MaxSpedLevels, 0.0),
-			SCDWHMassFlowRate(MaxSpedLevels, 0.0),
-			SCDWHSpeedRatio(MaxSpedLevels, 0.0),
-			SHDWHVolumeFlowRate(MaxSpedLevels, 0.0),
-			SHDWHMassFlowRate(MaxSpedLevels, 0.0),
-			SHDWHSpeedRatio(MaxSpedLevels, 0.0),
 			WaterVolSCDWH(0.0),
-			TimeLimitSHDWH(0.0) 
+			TimeLimitSHDWH(0.0),
+			WHtankType(0),
+			WHtankID(0),
+			IsWHCallAvail(false),
+			CheckWHCall(false),
+			CurMode(0),
+			ControlledZoneTemp(0),
+			WaterFlowAccumVol(0),
+			SHDWHRunTime(0),
+			NodeConnected(false),
+			TotalHeatingEnergyRate(0),
+			CoolVolFlowScale(0),
+			HeatVolFlowScale(0),
+			MaxHeatAirMassFlow(0),
+			MaxHeatAirVolFlow(0),
+			MaxCoolAirMassFlow(0),
+			MaxCoolAirVolFlow(0),
+			IHPCoilsSized(false)
 		{}
 
 		// Member Constructor
@@ -240,23 +215,26 @@ namespace IntegratedHeatPumps {
 			Real64 const TambientOverCoolAllow, //- [C], ambient temperature above which indoor overcooling is allowed
 			Real64 const TindoorWHHighPriority,  //- [C], indoor temperature above which water heating has the higher priority
 			Real64 const TambientWHHighPriority, //ambient temperature above which water heating has the higher priority
-			Array1D< Real64 >  const &SCVolumeFlowRate, // Supply air volume flow rate during cooling operation
-			Array1D< Real64 >  const &SCMassFlowRate, // Supply air mass flow rate during cooling operation
-			Array1D< Real64 >  const &SCSpeedRatio, // Fan speed ratio in cooling mode
-			Array1D< Real64 >  const &SHVolumeFlowRate, // Supply air volume flow rate during heating operation
-			Array1D< Real64 >  const &SHMassFlowRate, // Supply air mass flow rate during heating operation
-			Array1D< Real64 >  const &SHSpeedRatio, // Fan speed ratio in heating mode
-			Array1D< Real64 >  const &SCWHVolumeFlowRate, // Supply air volume flow rate during SCWH operation
-			Array1D< Real64 >  const &SCWHMassFlowRate, // Supply air mass flow rate during SCWH operation
-			Array1D< Real64 >  const &SCWHSpeedRatio, // Fan speed ratio in SCWH mode
-			Array1D< Real64 >  const &SCDWHVolumeFlowRate, // Supply air volume flow rate during SCDWH operation
-			Array1D< Real64 >  const &SCDWHMassFlowRate, // Supply air mass flow rate during SCDWH operation
-			Array1D< Real64 >  const &SCDWHSpeedRatio, // Fan speed ratio in SCDWH mode
-			Array1D< Real64 >  const &SHDWHVolumeFlowRate, // Supply air volume flow rate during SHDWH operation
-			Array1D< Real64 >  const &SHDWHMassFlowRate, // Supply air mass flow rate during SHDWH operation
-			Array1D< Real64 >  const &SHDWHSpeedRatio, // Fan speed ratio in SHDWH mode
 			Real64 const WaterVolSCDWH,// limit of water volume before switching from SCDWH to SCWH
-			Real64 const TimeLimitSHDWH //time limit before turning from SHDWH to electric heating 
+			Real64 const TimeLimitSHDWH, //time limit before turning from SHDWH to electric heating 
+			int const WHtankType,
+			std::string const &WHtankName,
+			int const WHtankID,
+			bool const IsWHCallAvail,//whether water heating call available
+			bool const CheckWHCall,
+			int const CurMode, //current working mode
+			Real64 const ControlledZoneTemp,
+			Real64 const WaterFlowAccumVol,// water flow accumulated volume
+			Real64 const SHDWHRunTime,
+			bool const NodeConnected,
+			Real64 const TotalHeatingEnergyRate,
+			Real64 const CoolVolFlowScale,// max fan cooling volumetric flow rate
+			Real64 const HeatVolFlowScale,// max fan heating volumetric flow rate
+			Real64 const MaxHeatAirMassFlow,//maximum air mass flow rate for heating mode
+			Real64 const MaxHeatAirVolFlow,//maximum air volume flow rate for heating mode
+			Real64 const MaxCoolAirMassFlow,//maximum air mass flow rate for heating mode
+			Real64 const MaxCoolAirVolFlow,//maximum air volume flow rate for heating mode
+			bool const IHPCoilsSized//whether IHP coils have been sized
 		) :
 			Name( Name ),
 			IHPtype(IHPCoilType),
@@ -297,23 +275,27 @@ namespace IntegratedHeatPumps {
 			TambientOverCoolAllow(TambientOverCoolAllow), 
 			TindoorWHHighPriority(TindoorWHHighPriority),  
 			TambientWHHighPriority(TambientWHHighPriority), 
-			SCVolumeFlowRate(MaxSpedLevels, SCVolumeFlowRate),
-			SCMassFlowRate(MaxSpedLevels, SCMassFlowRate),
-			SCSpeedRatio(MaxSpedLevels, SCSpeedRatio),
-			SHVolumeFlowRate(MaxSpedLevels, SHVolumeFlowRate),
-			SHMassFlowRate(MaxSpedLevels, SHMassFlowRate),
-			SHSpeedRatio(MaxSpedLevels, SHSpeedRatio),
-			SCWHVolumeFlowRate(MaxSpedLevels, SCWHVolumeFlowRate),
-			SCWHMassFlowRate(MaxSpedLevels, SCWHMassFlowRate),
-			SCWHSpeedRatio(MaxSpedLevels, SCWHSpeedRatio),
-			SCDWHVolumeFlowRate(MaxSpedLevels, SCDWHVolumeFlowRate),
-			SCDWHMassFlowRate(MaxSpedLevels, SCDWHMassFlowRate),
-			SCDWHSpeedRatio(MaxSpedLevels, SCDWHSpeedRatio),
-			SHDWHVolumeFlowRate(MaxSpedLevels, SHDWHVolumeFlowRate),
-			SHDWHMassFlowRate(MaxSpedLevels, SHDWHMassFlowRate),
-			SHDWHSpeedRatio(MaxSpedLevels, SHDWHSpeedRatio),
 			WaterVolSCDWH(WaterVolSCDWH),
-			TimeLimitSHDWH(TimeLimitSHDWH)
+			TimeLimitSHDWH(TimeLimitSHDWH), 
+			WHtankType(WHtankType),
+			WHtankName(WHtankName),
+			WHtankID(WHtankID),
+			IsWHCallAvail(IsWHCallAvail),//whether water heating call available
+			CheckWHCall(CheckWHCall),
+			CurMode(CurMode), //current working mode
+			ControlledZoneTemp(ControlledZoneTemp),
+			WaterFlowAccumVol(WaterFlowAccumVol),// water flow accumulated volume
+			SHDWHRunTime(SHDWHRunTime),
+			NodeConnected(NodeConnected),
+			TotalHeatingEnergyRate(TotalHeatingEnergyRate),
+			CoolVolFlowScale(CoolVolFlowScale),// max fan cooling volumetric flow rate
+			HeatVolFlowScale(HeatVolFlowScale),// max fan heating volumetric flow rate
+			MaxHeatAirMassFlow(MaxHeatAirMassFlow),//maximum air mass flow rate for heating mode
+			MaxHeatAirVolFlow(MaxHeatAirVolFlow),//maximum air volume flow rate for heating mode
+			MaxCoolAirMassFlow(MaxCoolAirMassFlow),//maximum air mass flow rate for heating mode
+			MaxCoolAirVolFlow(MaxCoolAirVolFlow),//maximum air volume flow rate for heating mode
+			IHPCoilsSized(IHPCoilsSized)//whether IHP coils have been sized
+
 		{}
 
 	};

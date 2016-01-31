@@ -353,7 +353,7 @@ namespace EnergyPlus {
 			// na
 
 			// SUBROUTINE PARAMETER DEFINITIONS:
-			static std::string const RoutineName("GGetIHPInput: "); // include trailing blank space
+			static std::string const RoutineName("GetIHPInput: "); // include trailing blank space
 
 			// INTERFACE BLOCK SPECIFICATIONS
 			// na
@@ -382,10 +382,8 @@ namespace EnergyPlus {
 			Array1D_bool lAlphaBlanks; // Logical array, alpha field input BLANK = .TRUE.
 			Array1D_bool lNumericBlanks; // Logical array, numeric field input BLANK = .TRUE.
 
-			static bool ErrorsFound(false); // If errors detected in input
-	
+			static bool ErrorsFound(false); // If errors detected in input	
 			int CoilCounter; // Counter
-			int I; // Loop index increment
 
 			int IOStat;
 			int AlfaFieldIncre; // increment number of Alfa field
@@ -393,9 +391,6 @@ namespace EnergyPlus {
 			bool IsNotOK; // Flag to verify name
 			bool IsBlank; // Flag for blank name
 			bool errFlag;
-			Real64 CurveVal; // Used to verify modifier curves equal 1 at rated conditions
-			Real64 WHInletAirTemp; // Used to pass proper inlet air temp to HPWH DX coil performance curves
-			Real64 WHInletWaterTemp; // Used to pass proper inlet water temp to HPWH DX coil performance curves
 			int InNode(0);
 			int OutNode(0);
 
@@ -467,8 +462,7 @@ namespace EnergyPlus {
 
 				TestCompSet(CurrentModuleObject, AlphArray(1), AlphArray(2), AlphArray(3), "Air Nodes");
 				TestCompSet(CurrentModuleObject, AlphArray(1), AlphArray(4), AlphArray(5), "Water Nodes");
-
-
+				
 				IntegratedHeatPumpUnits(DXCoilNum).SCCoilType = "COIL:COOLING:DX:VARIABLESPEED";
 				IntegratedHeatPumpUnits(DXCoilNum).SCCoilName = AlphArray(7);
 				Coiltype = IntegratedHeatPumpUnits(DXCoilNum).SCCoilType;
@@ -525,8 +519,7 @@ namespace EnergyPlus {
 						ErrorsFound = true;
 					}
 				}
-
-
+				
 				IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilType = "COIL:WATERHEATING:AIRTOWATERHEATPUMP:VARIABLESPEED";
 				IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilName = AlphArray(10);
 				Coiltype = IntegratedHeatPumpUnits(DXCoilNum).SCWHCoilType;
@@ -584,8 +577,7 @@ namespace EnergyPlus {
 						ErrorsFound = true;
 					}
 				}
-
-				
+								
 				IntegratedHeatPumpUnits(DXCoilNum).SHDWHHeatCoilType = "COIL:HEATING:DX:VARIABLESPEED";
 				IntegratedHeatPumpUnits(DXCoilNum).SHDWHHeatCoilName = AlphArray(13);
 				Coiltype = IntegratedHeatPumpUnits(DXCoilNum).SHDWHHeatCoilType;
@@ -604,8 +596,7 @@ namespace EnergyPlus {
 						ErrorsFound = true;
 					}
 				}
-
-
+				
 				IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilType = "COIL:WATERHEATING:AIRTOWATERHEATPUMP:VARIABLESPEED";
 				IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilName = AlphArray(14);
 				Coiltype = IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilType;
@@ -647,7 +638,7 @@ namespace EnergyPlus {
 					SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SCDWHCoolCoilName, ErrorsFound, InNode, OutNode);
 					SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SCDWHWHCoilName, ErrorsFound, InNode, OutNode);
 					SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHHeatCoilName, ErrorsFound, InNode, OutNode);
-					SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilName, ErrorsFound, InNode, OutNode);
+					//SetAirNodes(IntegratedHeatPumpUnits(DXCoilNum).SHDWHWHCoilName, ErrorsFound, InNode, OutNode);//SHDWHWHCoil has outdoor air nodes
 
 					//water node connections
 					InNode = IntegratedHeatPumpUnits(DXCoilNum).WaterInletNodeNum;

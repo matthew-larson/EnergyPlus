@@ -34,6 +34,10 @@ endif()
 install(FILES "${CMAKE_SOURCE_DIR}/LICENSE.txt" DESTINATION "./")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
 
+# yay!
+install(FILES "${CMAKE_BINARY_DIR}/doc/latex/engref.pdf" DESTINATION "./")
+install(FILES "${CMAKE_BINARY_DIR}/doc/latex/ioref.pdf" DESTINATION "./")
+
 install( FILES "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Energy+.idd" DESTINATION ./ )
 
 # Some docs are generated on the fly here, create a dir for the 'built' files

@@ -156,7 +156,6 @@ INCLUDE_DIRECTORIES( "${CMAKE_SOURCE_DIR}/third_party/Expat" "${CMAKE_SOURCE_DIR
 INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/third_party/CLI/ )
 INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/third_party/jsoncpp)
 INCLUDE_DIRECTORIES( ${CMAKE_BINARY_DIR}/src/EnergyPlus)  # so that any source can #include <ConfiguredFunctions.hh>
-add_latex_document( "doc/latex_test/main.tex" )
 
 if( BUILD_TESTING )
   option( TEST_ANNUAL_SIMULATION "Use annual simulations for tests instead of only design days" OFF )
@@ -177,6 +176,7 @@ IF(NOT APPLE )
   ADD_SUBDIRECTORY(third_party/FMUParser)
 ENDIF()
 ADD_SUBDIRECTORY(third_party/jsoncpp)
+ADD_SUBDIRECTORY(doc/latex)
 
 # of course E+ itself
 ADD_SUBDIRECTORY(src/EnergyPlus)

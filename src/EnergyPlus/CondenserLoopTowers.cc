@@ -2685,8 +2685,24 @@ namespace CondenserLoopTowers {
 						ShowSevereError( "Iteration limit exceeded in calculating tower UA" );
 						ShowFatalError( "Autosizing of cooling tower UA failed for tower " + SimpleTower( TowerNum ).Name );
 					} else if ( SolFla == -2 ) {
-						ShowSevereError( "Bad starting values for UA" );
-						ShowFatalError( "Autosizing of cooling tower UA failed for tower " + SimpleTower( TowerNum ).Name );
+						ShowSevereError("Bad starting values for UA calculations");
+						ShowContinueError("Tower inlet design water temperature assumed to be 35.0 C.");
+						ShowContinueError("Tower inlet design air dry-bulb temperature assumed to be 35.0 C.");
+						ShowContinueError("Tower inlet design air wet-bulb temperature assumed to be 25.6 C.");
+						ShowContinueError("Tower load assumed to be " + TrimSigDigits(SimpleTower(TowerNum).HeatRejectCapNomCapSizingRatio, 3) + " times free convection capacity of " + TrimSigDigits(SimpleTower(TowerNum).TowerFreeConvNomCap, 0) + " W.");
+
+						SimSimpleTower(TowerNum, Par(3), Par(4), UA0, OutWaterTemp);
+						CoolingOutput = Par(5) * Par(3) * (SimpleTowerInlet(TowerNum).WaterTemp - OutWaterTemp);
+						ShowContinueError("Tower capacity at lower UA guess (" + TrimSigDigits(UA0, 4) + ") = " + TrimSigDigits(CoolingOutput, 0) + " W.");
+
+						SimSimpleTower(TowerNum, Par(3), Par(4), UA1, OutWaterTemp);
+						CoolingOutput = Par(5) * Par(3) * (SimpleTowerInlet(TowerNum).WaterTemp - OutWaterTemp);
+						ShowContinueError("Tower capacity at upper UA guess (" + TrimSigDigits(UA1, 4) + ") = " + TrimSigDigits(CoolingOutput, 0) + " W.");
+
+						if (CoolingOutput < DesTowerLoad) {
+							ShowContinueError("Free convection capacity should be less than tower capacity at upper UA guess.");
+						}
+						ShowFatalError("Autosizing of cooling tower UA failed for tower " + SimpleTower(TowerNum).Name);
 					}
 
 					if ( PlantFirstSizesOkayToFinalize ) {
@@ -2752,8 +2768,24 @@ namespace CondenserLoopTowers {
 						ShowSevereError( "Iteration limit exceeded in calculating tower UA" );
 						ShowFatalError( "Autosizing of cooling tower UA failed for tower " + SimpleTower( TowerNum ).Name );
 					} else if ( SolFla == -2 ) {
-						ShowSevereError( "Bad starting values for UA" );
-						ShowFatalError( "Autosizing of cooling tower UA failed for tower " + SimpleTower( TowerNum ).Name );
+						ShowSevereError("Bad starting values for UA calculations");
+						ShowContinueError("Tower inlet design water temperature assumed to be 35.0 C.");
+						ShowContinueError("Tower inlet design air dry-bulb temperature assumed to be 35.0 C.");
+						ShowContinueError("Tower inlet design air wet-bulb temperature assumed to be 25.6 C.");
+						ShowContinueError("Tower load assumed to be " + TrimSigDigits(SimpleTower(TowerNum).HeatRejectCapNomCapSizingRatio, 3) + " times free convection capacity of " + TrimSigDigits(SimpleTower(TowerNum).TowerFreeConvNomCap, 0) + " W.");
+
+						SimSimpleTower(TowerNum, Par(3), Par(4), UA0, OutWaterTemp);
+						CoolingOutput = Par(5) * Par(3) * (SimpleTowerInlet(TowerNum).WaterTemp - OutWaterTemp);
+						ShowContinueError("Tower capacity at lower UA guess (" + TrimSigDigits(UA0, 4) + ") = " + TrimSigDigits(CoolingOutput, 0) + " W.");
+
+						SimSimpleTower(TowerNum, Par(3), Par(4), UA1, OutWaterTemp);
+						CoolingOutput = Par(5) * Par(3) * (SimpleTowerInlet(TowerNum).WaterTemp - OutWaterTemp);
+						ShowContinueError("Tower capacity at upper UA guess (" + TrimSigDigits(UA1, 4) + ") = " + TrimSigDigits(CoolingOutput, 0) + " W.");
+
+						if (CoolingOutput < DesTowerLoad) {
+							ShowContinueError("Free convection capacity should be less than tower capacity at upper UA guess.");
+						}
+						ShowFatalError("Autosizing of cooling tower UA failed for tower " + SimpleTower(TowerNum).Name);
 					}
 
 					if ( PlantFirstSizesOkayToFinalize ) {
@@ -2812,8 +2844,24 @@ namespace CondenserLoopTowers {
 					ShowSevereError( "Iteration limit exceeded in calculating tower UA" );
 					ShowFatalError( "Autosizing of cooling tower UA failed for tower " + SimpleTower( TowerNum ).Name );
 				} else if ( SolFla == -2 ) {
-					ShowSevereError( "Bad starting values for UA" );
-					ShowFatalError( "Autosizing of cooling tower UA failed for tower " + SimpleTower( TowerNum ).Name );
+					ShowSevereError("Bad starting values for UA calculations");
+					ShowContinueError("Tower inlet design water temperature assumed to be 35.0 C.");
+					ShowContinueError("Tower inlet design air dry-bulb temperature assumed to be 35.0 C.");
+					ShowContinueError("Tower inlet design air wet-bulb temperature assumed to be 25.6 C.");
+					ShowContinueError("Tower load assumed to be " + TrimSigDigits(SimpleTower(TowerNum).HeatRejectCapNomCapSizingRatio, 3) + " times free convection capacity of " + TrimSigDigits(SimpleTower(TowerNum).TowerFreeConvNomCap, 0) + " W.");
+
+					SimSimpleTower(TowerNum, Par(3), Par(4), UA0, OutWaterTemp);
+					CoolingOutput = Par(5) * Par(3) * (SimpleTowerInlet(TowerNum).WaterTemp - OutWaterTemp);
+					ShowContinueError("Tower capacity at lower UA guess (" + TrimSigDigits(UA0, 4) + ") = " + TrimSigDigits(CoolingOutput, 0) + " W.");
+
+					SimSimpleTower(TowerNum, Par(3), Par(4), UA1, OutWaterTemp);
+					CoolingOutput = Par(5) * Par(3) * (SimpleTowerInlet(TowerNum).WaterTemp - OutWaterTemp);
+					ShowContinueError("Tower capacity at upper UA guess (" + TrimSigDigits(UA1, 4) + ") = " + TrimSigDigits(CoolingOutput, 0) + " W.");
+
+					if (CoolingOutput < DesTowerLoad) {
+						ShowContinueError("Free convection capacity should be less than tower capacity at upper UA guess.");
+					}
+					ShowFatalError("Autosizing of cooling tower UA failed for tower " + SimpleTower(TowerNum).Name);
 				}
 				if ( PlantFirstSizesOkayToFinalize ) {
 					SimpleTower( TowerNum ).HighSpeedTowerUA = UA;
@@ -2943,8 +2991,24 @@ namespace CondenserLoopTowers {
 					ShowSevereError( "Iteration limit exceeded in calculating tower UA" );
 					ShowFatalError( "Autosizing of cooling tower UA failed for tower " + SimpleTower( TowerNum ).Name );
 				} else if ( SolFla == -2 ) {
-					ShowSevereError( "Bad starting values for UA" );
-					ShowFatalError( "Autosizing of cooling tower UA failed for tower " + SimpleTower( TowerNum ).Name );
+					ShowSevereError("Bad starting values for UA calculations");
+					ShowContinueError("Tower inlet design water temperature assumed to be 35.0 C.");
+					ShowContinueError("Tower inlet design air dry-bulb temperature assumed to be 35.0 C.");
+					ShowContinueError("Tower inlet design air wet-bulb temperature assumed to be 25.6 C.");
+					ShowContinueError("Tower load assumed to be " + TrimSigDigits(SimpleTower(TowerNum).HeatRejectCapNomCapSizingRatio, 3) + " times free convection capacity of " + TrimSigDigits(SimpleTower(TowerNum).TowerFreeConvNomCap, 0) + " W.");
+
+					SimSimpleTower(TowerNum, Par(3), Par(4), UA0, OutWaterTemp);
+					CoolingOutput = Par(5) * Par(3) * (SimpleTowerInlet(TowerNum).WaterTemp - OutWaterTemp);
+					ShowContinueError("Tower capacity at lower UA guess (" + TrimSigDigits(UA0, 4) + ") = " + TrimSigDigits(CoolingOutput, 0) + " W.");
+
+					SimSimpleTower(TowerNum, Par(3), Par(4), UA1, OutWaterTemp);
+					CoolingOutput = Par(5) * Par(3) * (SimpleTowerInlet(TowerNum).WaterTemp - OutWaterTemp);
+					ShowContinueError("Tower capacity at upper UA guess (" + TrimSigDigits(UA1, 4) + ") = " + TrimSigDigits(CoolingOutput, 0) + " W.");
+
+					if (CoolingOutput < DesTowerLoad) {
+						ShowContinueError("Free convection capacity should be less than tower capacity at upper UA guess.");
+					}
+					ShowFatalError("Autosizing of cooling tower UA failed for tower " + SimpleTower(TowerNum).Name);
 				}
 				if ( PlantFirstSizesOkayToFinalize ) {
 					SimpleTower( TowerNum ).LowSpeedTowerUA = UA;
@@ -3259,6 +3323,7 @@ namespace CondenserLoopTowers {
 		Real64 rho( 0 ); // local density for fluid
 		Real64 UA; // Calculated UA value
 		Real64 OutWaterTemp;
+		Real64 CoolingOutput; // tower capacity during sizing [W]
 		Real64 DesTowerInletAirDBTemp; // design tower inlet air dry-bulb temperature
 		Real64 DesTowerInletAirWBTemp; // design tower inlet air wet-bulb temperature
 		Real64 DesTowerInletWaterTemp; // design tower inlet water temperature
@@ -3465,8 +3530,24 @@ namespace CondenserLoopTowers {
 					ShowSevereError( "Iteration limit exceeded in calculating tower UA" );
 					ShowFatalError( "calculating cooling tower UA failed for tower " + SimpleTower( TowerNum ).Name );
 				} else if ( SolFla == -2 ) {
-					ShowSevereError( "Bad starting values for UA" );
-					ShowFatalError( "Autosizing of cooling tower UA failed for tower " + SimpleTower( TowerNum ).Name );
+					ShowSevereError("Bad starting values for UA calculations");
+					ShowContinueError("Tower inlet design water temperature assumed to be 35.0 C.");
+					ShowContinueError("Tower inlet design air dry-bulb temperature assumed to be 35.0 C.");
+					ShowContinueError("Tower inlet design air wet-bulb temperature assumed to be 25.6 C.");
+					ShowContinueError("Tower load assumed to be " + TrimSigDigits(SimpleTower(TowerNum).HeatRejectCapNomCapSizingRatio, 3) + " times free convection capacity of " + TrimSigDigits(SimpleTower(TowerNum).TowerFreeConvNomCap, 0) + " W.");
+
+					SimSimpleTower(TowerNum, Par(3), Par(4), UA0, OutWaterTemp);
+					CoolingOutput = Par(5) * Par(3) * (SimpleTowerInlet(TowerNum).WaterTemp - OutWaterTemp);
+					ShowContinueError("Tower capacity at lower UA guess (" + TrimSigDigits(UA0, 4) + ") = " + TrimSigDigits(CoolingOutput, 0) + " W.");
+
+					SimSimpleTower(TowerNum, Par(3), Par(4), UA1, OutWaterTemp);
+					CoolingOutput = Par(5) * Par(3) * (SimpleTowerInlet(TowerNum).WaterTemp - OutWaterTemp);
+					ShowContinueError("Tower capacity at upper UA guess (" + TrimSigDigits(UA1, 4) + ") = " + TrimSigDigits(CoolingOutput, 0) + " W.");
+
+					if (CoolingOutput < DesTowerLoad) {
+						ShowContinueError("Free convection capacity should be less than tower capacity at upper UA guess.");
+					}
+					ShowFatalError("Autosizing of cooling tower UA failed for tower " + SimpleTower(TowerNum).Name);
 				}
 				SimpleTower( TowerNum ).HighSpeedTowerUA = UA;
 				if ( PlantFinalSizesOkayToReport ) {
@@ -3702,8 +3783,24 @@ namespace CondenserLoopTowers {
 						ShowSevereError( "Iteration limit exceeded in calculating tower UA" );
 						ShowFatalError( "calculating cooling tower UA failed for tower " + SimpleTower( TowerNum ).Name );
 					} else if ( SolFla == -2 ) {
-						ShowSevereError( "Bad starting values for UA" );
-						ShowFatalError( "Autosizing of cooling tower UA failed for tower " + SimpleTower( TowerNum ).Name );
+						ShowSevereError("Bad starting values for UA calculations");
+						ShowContinueError("Tower inlet design water temperature assumed to be 35.0 C.");
+						ShowContinueError("Tower inlet design air dry-bulb temperature assumed to be 35.0 C.");
+						ShowContinueError("Tower inlet design air wet-bulb temperature assumed to be 25.6 C.");
+						ShowContinueError("Tower load assumed to be " + TrimSigDigits(SimpleTower(TowerNum).HeatRejectCapNomCapSizingRatio, 3) + " times free convection capacity of " + TrimSigDigits(SimpleTower(TowerNum).TowerFreeConvNomCap, 0) + " W.");
+
+						SimSimpleTower(TowerNum, Par(3), Par(4), UA0, OutWaterTemp);
+						CoolingOutput = Par(5) * Par(3) * (SimpleTowerInlet(TowerNum).WaterTemp - OutWaterTemp);
+						ShowContinueError("Tower capacity at lower UA guess (" + TrimSigDigits(UA0, 4) + ") = " + TrimSigDigits(CoolingOutput, 0) + " W.");
+
+						SimSimpleTower(TowerNum, Par(3), Par(4), UA1, OutWaterTemp);
+						CoolingOutput = Par(5) * Par(3) * (SimpleTowerInlet(TowerNum).WaterTemp - OutWaterTemp);
+						ShowContinueError("Tower capacity at upper UA guess (" + TrimSigDigits(UA1, 4) + ") = " + TrimSigDigits(CoolingOutput, 0) + " W.");
+
+						if (CoolingOutput < DesTowerLoad) {
+							ShowContinueError("Free convection capacity should be less than tower capacity at upper UA guess.");
+						}
+						ShowFatalError("Autosizing of cooling tower UA failed for tower " + SimpleTower(TowerNum).Name);
 					}
 					SimpleTower( TowerNum ).HighSpeedTowerUA = UA;
 					if ( PlantFinalSizesOkayToReport ) {
@@ -4820,7 +4917,7 @@ namespace CondenserLoopTowers {
 			if ( SolFla == -1 ) {
 				if ( ! WarmupFlag ) {
 					if ( SimpleTower( TowerNum ).VSMerkelAFRErrorIter < 1 ) {
-						++SimpleTower( TowerNum ).VSMerkelAFRErrorIter;
+						//++SimpleTower( TowerNum ).VSMerkelAFRErrorIter;
 						ShowWarningError( cCoolingTower_VariableSpeedMerkel + " - Iteration limit exceeded calculating variable speed fan ratio for unit = " + SimpleTower( TowerNum ).Name );
 						ShowContinueError( "Estimated air flow ratio  = " + RoundSigDigits( ( std::abs( MyLoad ) - MinSpeedFanQdot ) / ( FullSpeedFanQdot - MinSpeedFanQdot ), 4 ) );
 						ShowContinueError( "Calculated air flow ratio = " + RoundSigDigits( AirFlowRateRatio, 4 ) );
@@ -4832,7 +4929,7 @@ namespace CondenserLoopTowers {
 				AirFlowRateRatio = ( std::abs( MyLoad ) - MinSpeedFanQdot ) / ( FullSpeedFanQdot - MinSpeedFanQdot );
 				if ( ! WarmupFlag ) {
 					if ( SimpleTower( TowerNum ).VSMerkelAFRErrorFail < 1 ) {
-						++SimpleTower( TowerNum ).VSMerkelAFRErrorFail;
+						//++SimpleTower( TowerNum ).VSMerkelAFRErrorFail;
 						ShowWarningError( cCoolingTower_VariableSpeedMerkel + " - solver failed calculating variable speed fan ratio for unit = " + SimpleTower( TowerNum ).Name );
 						ShowContinueError( "Estimated air flow ratio  = " + RoundSigDigits( AirFlowRateRatio, 4 ) );
 						ShowContinueErrorTimeStamp( "The estimated air flow ratio will be used and the simulation continues. Occurrence info:" );

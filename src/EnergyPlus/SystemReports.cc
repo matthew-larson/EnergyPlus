@@ -762,7 +762,7 @@ namespace SystemReports {
 
 					if ( SubSubCompNum > 0 ) {
 						ArrayCount = 0;
-						for ( int i = 1; i <= SubCompNum; ++i ) {
+						for ( int i = 1; i <= SubSubCompNum; ++i ) {
 							auto const & ai( AirSysSubSubCompToPlant( i ) );
 							bool duplicate( false );
 							for ( int j = 1; j <= ArrayCount; ++j ) {
@@ -790,7 +790,7 @@ namespace SystemReports {
 								}
 							}
 						}
-						for ( int i = ArrayCount + 1; i <= SubCompNum; ++i ) { // Zero the now-unused entries
+						for ( int i = ArrayCount + 1; i <= SubSubCompNum; ++i ) { // Zero the now-unused entries
 							auto & ai( AirSysSubSubCompToPlant( i ) );
 							ai.AirLoopNum = 0;
 							ai.AirLoopBranch = 0;

@@ -1587,12 +1587,11 @@ namespace HybridEvapCoolingModel {
             // Zone Sensible Cooling{ W } = m'SA {kg/s} * 0.5*(cpRA+cpSA) {kJ/kg-C} * (T_RA - T_SA) {C}
             // Zone Latent Cooling{ W } = m'SAdryair {kg/s} * L {kJ/kgWater} * (HR_RA - HR_SA) {kgWater/kgDryAir}
             // Zone Total Cooling{ W } = m'SAdryair {kg/s} * (h_RA - h_SA) {kJ/kgDryAir}
-            Real64 SensibleRoomORZone = ScaledMsa * 0.5 * (SupplyAirCp + ReturnAirCP) * (StepIns.Tra - Tsa) / 1000; // kw  dynamic cp
-            Real64 latentRoomORZone = LambdaSa * MsaDry * (Wra - Wsa);                                              // kw
-                                                                                                                    // Total room cooling
-            Real64 TotalRoomORZone = (Hra - Hsa) * ScaledMsa / 1000;                                                // kw
-                                                                                                                    // Perform latent check
-            // Real64 latentRoomORZoneCheck = TotalRoomORZone - SensibleRoomORZone;
+            Real64 MinHumRat = min(InletHumRat, OutletHumRat);
+            Real64 SensibleRoomORZone = ScaledMsa * (PsyHFnTdbW(InletTemp, MinHumRat) - PsyHFnTdbW(OutletTemp, MinHumRat)) / 1000; // kW
+            LambdaSa = Psychrometrics::PsyHfgAirFnWTdb(0, OutletTemp);
+            Real64 latentRoomORZone = ScaledMsa * (InletHumRat - OutletHumRat) * LambdaSa / 1000; // kW
+            Real64 TotalRoomORZone = SensibleRoomORZone + latentRoomORZone; // kW
 
             thisSetting.TotalSystem = TotalSystem;
             thisSetting.SensibleSystem = SensibleSystem;
@@ -1644,7 +1643,9 @@ namespace HybridEvapCoolingModel {
                 thisSetting.oMode.CalculateCurveVal(StepIns.Tosa, Wosa, StepIns.Tra, Wra, UnscaledMsa, OSAF, WATER_USE);
 
             // Calculate EIR
-            EIR = ElectricalPower / TotalSystem;
+            if (TotalSystem > 0) {
+                EIR = ElectricalPower / TotalSystem;
+            }
 
             // Calculate partload fraction required to meet all requirements
             Real64 PartRuntimeFraction = 0;
@@ -1732,7 +1733,7 @@ namespace HybridEvapCoolingModel {
             CurrentOperatingSettings[1] = oStandBy;
         } else {
             // if we partly met the load then do the best we can and run full out in that optimal setting.
-            if (!DidWeMeetLoad && DidWePartlyMeetLoad) {
+            if ((!DidWeMeetLoad && DidWePartlyMeetLoad) || VentilationRequested) {
                 ErrorCode = 0;
                 count_DidWeNotMeetLoad++;
                 if (OptimalSetting.ElectricalPower == IMPLAUSIBLE_POWER) {
@@ -1945,8 +1946,8 @@ namespace HybridEvapCoolingModel {
         StepIns.ZoneDehumidificationLoad = RequestedDeHumdificationLoad;
         StepIns.MinimumOA = DesignMinVR;
         // calculate W humidity ratios for outdoor air and return air
-        Real64 Wosa = PsyWFnTdbRhPb(StepIns.Tosa, StepIns.RHosa, 101325);
-        Real64 Wra = PsyWFnTdbRhPb(StepIns.Tra, StepIns.RHra, 101325);
+        Real64 Wosa = PsyWFnTdbH(StepIns.Tosa, OutEnthalpy);
+        Real64 Wra = PsyWFnTdbH(StepIns.Tra, InletEnthalpy);
         // Sets boolean values for each potential conditioning requirement;  CoolingRequested, HeatingRequested, VentilationRequested,
         // DehumidificationRequested, HumidificationRequested
         DetermineCoolingVentilationOrHumidificationNeeds(StepIns);
@@ -1992,7 +1993,7 @@ namespace HybridEvapCoolingModel {
         Real64 QSensSystemOut = 0;
         Real64 QLatentSystemOut = 0;
         // Even if its off or in standby we still need to continue to calculate standby loads
-        // All powers are calculated in Watts amd energies in Joules
+        // All powers are calculated in Watts and energies in Joules
 
         SupplyVentilationVolume = CalculateTimeStepAverage(SYSTEMOUTPUTS::VENTILATION_AIR_V);
         if (StdRhoAir > 1) {
@@ -2034,17 +2035,16 @@ namespace HybridEvapCoolingModel {
             Real64 Outletcp = PsyCpAirFnWTdb(OutletHumRat, OutletTemp); // J/degreesK.kg
             Real64 Returncp = PsyCpAirFnWTdb(Wra, StepIns.Tra);         // J/degreesK.kg
             Real64 Outdoorcp = PsyCpAirFnWTdb(Wosa, StepIns.Tosa);      // J/degreesK.kg
-
             // Zone Sensible Cooling{ W } = m'SA {kg/s} * 0.5*(cpRA+cpSA) {kJ/kg-C} * (T_RA - T_SA) {C}
             // Zone Latent Cooling{ W } = m'SAdryair {kg/s} * L {kJ/kgWater} * (HR_RA - HR_SA) {kgWater/kgDryAir}
             // Zone Total Cooling{ W } = m'SAdryair {kg/s} * (h_RA - h_SA) {kJ/kgDryAir}
-            QSensZoneOut = OutletMassFlowRate * 0.5 * (Returncp + Outletcp) * (StepIns.Tra - OutletTemp); // Watts
+            Real64 MinHumRat = min(InletHumRat, OutletHumRat);
+            QSensZoneOut = OutletMassFlowRate * (PsyHFnTdbW(InletTemp, MinHumRat) - PsyHFnTdbW(OutletTemp, MinHumRat)); // Watts
             Real64 OutletMassFlowRateDry = OutletMassFlowRate * (1 - Wsa);
             Real64 LambdaSa = Psychrometrics::PsyHfgAirFnWTdb(0, OutletTemp);
-            QLatentZoneOutMass = 1000 * OutletMassFlowRateDry * (InletHumRat - OutletHumRat); // Watts
-            QLatentZoneOut = QLatentZoneOutMass * LambdaSa;
-            QTotZoneOut = OutletMassFlowRateDry * (InletEnthalpy - OutletEnthalpy); // Watts
-            Real64 QLatentCheck = QTotZoneOut - QSensZoneOut;                       // Watts
+            QLatentZoneOutMass = OutletMassFlowRate * (InletHumRat - OutletHumRat); // kg/s
+            QLatentZoneOut = QLatentZoneOutMass * LambdaSa; // Watts
+            QTotZoneOut = QSensZoneOut + QLatentZoneOut; // Watts
 
             // System Sensible Cooling{ W } = m'SA {kg/s} * 0.5*(cpRA + OSAF*(cpOSA-cpRA) + cpSA) {kJ/kg-C} * (T_RA + OSAF*(T_OSA - T_RA)  - T_SA)
             // System Latent Cooling{ W } = m'SAdryair {kg/s} * L {kJ/kgWater} * (HR_RA + OSAF *(HR_OSA - HR_RA) - HR_SA) {kgWater/kgDryAir}
@@ -2053,11 +2053,11 @@ namespace HybridEvapCoolingModel {
             Real64 SystemTimeStepCp = Returncp + averageOSAF * (Outdoorcp - Returncp) + Outletcp; // cpRA + OSAF*(cpOSA-cpRA) + cpSA //J/degreesK.kg
             Real64 SystemTimeStepW = InletHumRat + averageOSAF * (Wosa - Wra) - OutletHumRat;     // HR_RA + OSAF *(HR_OSA - HR_RA) - HR_SA
             Real64 SystemTimeStepT = StepIns.Tra + averageOSAF * (StepIns.Tosa - StepIns.Tra) - OutletTemp; // T_RA + OSAF *(T_OSA - T_RA) - T_SA
-            QSensSystemOut = 0.5 * SystemTimeStepCp * OutletMassFlowRate * SystemTimeStepT;                 // w
-
-            QLatentSystemOut = 1000 * LambdaSa * OutletMassFlowRateDry * SystemTimeStepW; // Watts
-            QTotSystemOut = OutletMassFlowRateDry * (MixedAirEnthalpy - OutletEnthalpy);  // Watts
-            QLatentCheck = QTotSystemOut - QSensSystemOut;                                // Watts
+            MinHumRat = min(OutHumRat, OutletHumRat);
+            QSensSystemOut = 0.5 * SystemTimeStepCp * OutletMassFlowRate * SystemTimeStepT; // Watts
+            QLatentSystemOut = 1000 * LambdaSa *OutletMassFlowRateDry *SystemTimeStepW; // Watts
+            QTotSystemOut = OutletMassFlowRateDry *(MixedAirEnthalpy - OutletEnthalpy); // Watts
+            Real64 QLatentCheck = QTotSystemOut - QSensSystemOut; // Watts
 
             // reset outputs
             ResetOutputs();
@@ -2084,7 +2084,7 @@ namespace HybridEvapCoolingModel {
                 UnitLatentCoolingRate = UnitTotalCoolingRate - UnitSensibleCoolingRate;       // Watts
                 UnitLatentCoolingEnergy = UnitTotalCoolingEnergy - UnitSensibleCoolingEnergy; // J
             }
-            if ((UnitTotalCoolingRate - UnitSensibleCoolingRate) < 0) {
+            if ((UnitTotalHeatingRate - UnitSensibleHeatingRate) > 0) {
                 UnitLatentHeatingRate = UnitTotalHeatingRate - UnitSensibleHeatingRate;       // Watts
                 UnitLatentHeatingEnergy = UnitTotalHeatingEnergy - UnitSensibleHeatingEnergy; // J
             }
@@ -2111,7 +2111,7 @@ namespace HybridEvapCoolingModel {
                 SystemLatentCoolingRate = SystemTotalCoolingRate - SystemSensibleCoolingRate;
                 SystemLatentCoolingEnergy = SystemTotalCoolingEnergy - SystemSensibleCoolingEnergy;
             }
-            if ((SystemTotalHeatingRate - SystemSensibleHeatingRate) < 0) {
+            if ((SystemTotalHeatingRate - SystemSensibleHeatingRate) > 0) {
                 SystemLatentHeatingRate = SystemTotalHeatingRate - SystemSensibleHeatingRate;
                 SystemLatentHeatingEnergy = SystemTotalHeatingEnergy - SystemSensibleHeatingEnergy;
             }

@@ -2413,7 +2413,7 @@ namespace ReportSizingManager {
                                 ShowContinueError("  Coil outlet air humidity ratio = " +
                                                   TrimSigDigits(FinalZoneSizing(CurZoneEqNum).HeatDesHumRat, 3) + " kgWater/kgDryAir");
                             }
-                            DataErrorsFound = true;
+                            //DataErrorsFound = true;
                         } else if (SolFla == -2) {
                             ShowSevereError("Autosizing of heating coil UA failed for Coil:Heating:Water \"" + CompName + "\"");
                             ShowContinueError("  Bad starting values for UA");
@@ -2448,7 +2448,7 @@ namespace ReportSizingManager {
                                     "  Plant design loop exit temperature = " + TrimSigDigits(PlantSizData(DataPltSizHeatNum).ExitTemp, 3) + " C");
                                 ShowContinueError("  Plant design loop delta T          = " + TrimSigDigits(DataWaterCoilSizHeatDeltaT, 3) + " C");
                             }
-                            DataErrorsFound = true;
+                            //DataErrorsFound = true;
                         }
                     } else {
                         AutosizeDes = 1.0;
@@ -3525,7 +3525,7 @@ namespace ReportSizingManager {
                                 ShowContinueError("  Coil outlet air humidity ratio = " + TrimSigDigits(DataDesOutletAirHumRat, 3) +
                                                   " kgWater/kgDryAir");
                             }
-                            DataErrorsFound = true;
+                            //DataErrorsFound = true;
                         } else if (SolFla == -2) {
                             ShowSevereError("Autosizing of heating coil UA failed for Coil:Heating:Water \"" + CompName + "\"");
                             ShowContinueError("  Bad starting values for UA");
@@ -3551,7 +3551,7 @@ namespace ReportSizingManager {
                                     "  Plant design loop exit temperature = " + TrimSigDigits(PlantSizData(DataPltSizHeatNum).ExitTemp, 3) + " C");
                                 ShowContinueError("  Plant design loop delta T          = " + TrimSigDigits(DataWaterCoilSizHeatDeltaT, 3) + " C");
                             }
-                            DataErrorsFound = true;
+                            //DataErrorsFound = true;
                         }
                     } else {
                         AutosizeDes = 1.0;

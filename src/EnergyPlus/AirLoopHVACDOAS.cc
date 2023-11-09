@@ -58,6 +58,7 @@
 #include <EnergyPlus/DataLoopNode.hh>
 #include <EnergyPlus/DataSizing.hh>
 #include <EnergyPlus/DesiccantDehumidifiers.hh>
+#include <EnergyPlus/DXCoils.hh>
 #include <EnergyPlus/EvaporativeCoolers.hh>
 #include <EnergyPlus/Fans.hh>
 #include <EnergyPlus/FluidProperties.hh>
@@ -603,8 +604,12 @@ namespace AirLoopHVACDOAS {
                         thisOutsideAirSys.OutletNodeNum(CompNum) =
                             HVACHXAssistedCoolingCoil::GetCoilOutletNode(state, CompType, CompName, OutletNodeErrFlag);
                         break;
-
+                        
                     case ValidEquipListType::CoilSystemCoolingDX:
+                        thisOutsideAirSys.InletNodeNum(CompNum) = DXCoils::GetCoilInletNode(state, CompType, CompName, InletNodeErrFlag);
+                        thisOutsideAirSys.OutletNodeNum(CompNum) = DXCoils::GetCoilOutletNode(state, CompType, CompName, OutletNodeErrFlag);
+                        break;
+
                     case ValidEquipListType::AirLoopHVACUnitarySystem:
                         if (thisOutsideAirSys.compPointer[CompNum] == nullptr) {
                             UnitarySystems::UnitarySys thisSys;
